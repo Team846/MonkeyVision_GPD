@@ -1,11 +1,16 @@
-from dash import Dash, html, dcc, Input, Output
+import math
+from dash import Dash, html, dcc, Input, Output, no_update
 import cv2
 from flask import Flask, Response
 from pipeline.visionmain import VisionMain
 import time
 from threading import Thread
+from util.config import ConfigCategory, Config
 
 class HTMLServer:
+    config_category = ConfigCategory("HTMLServer")
+    framecomp_slider = config_category.getFloatConfig("framecomp_slider", 0.5)
+
     def __init__(self, vision_main: VisionMain):
         self.vision_main = vision_main
         self.server = Flask(__name__)
@@ -50,7 +55,7 @@ class HTMLServer:
                             'color': '#CCC9CA',
                             'font-size': '18px',
                             'font-weight': 'medium',
-                            'padding': '0px 0px 0px 15px',
+                            'padding': '0px 0px 0px 7px',
                         }),
                         html.Div(
                             id='detections-container',
@@ -61,7 +66,15 @@ class HTMLServer:
                                 'padding': '0 0px',
                             }
                         ),
-                        html.Label("Dynamic Brightness Target", style={
+                        html.Br(),
+                        html.H4("Settings", style={
+                            'textAlign': 'left',
+                            'color': '#CCC9CA',
+                            'font-size': '18px',
+                            'font-weight': 'medium',
+                            'padding': '0px 0px 0px 7px',
+                        }),
+                        html.Label("Dynamic Frame Correction Target", style={
                             "color": "#CCC9CA",
                             "font-size": "16px",
                             "margin-bottom": "10px",
@@ -70,7 +83,7 @@ class HTMLServer:
                             "max-width": "250px",
                         }),
                         dcc.Slider(
-                            id="brightness-slider",
+                            id="dfc-target-slider",
                             min=0,
                             max=255,
                             step=1,
@@ -80,7 +93,7 @@ class HTMLServer:
                             className="funky-slider"
                         ),
                         html.Br(),
-                        html.Label("Frame Resolution", style={
+                        html.Label("Displayed Frame Quality", style={
                             "color": "#CCC9CA",
                             "font-size": "16px",
                             "margin-bottom": "10px",
@@ -89,12 +102,12 @@ class HTMLServer:
                             "max-width": "250px",
                         }),
                         dcc.Slider(
-                            id="other-setting-slider",
-                            min=0.125,
+                            id="framecomp-slider",
+                            min=0.05,
                             max=1,
                             step=0.001,
-                            value=0.562,
-                            marks={0.125: '12.5%', 1: '100%'},
+                            value=HTMLServer.framecomp_slider.valueFloat(),
+                            marks={0.05: '5%', 1: '100%'},
                             tooltip={"placement": "bottom", "always_visible": True},
                             className="funky-slider"
                         ),
@@ -111,7 +124,7 @@ class HTMLServer:
                     }),
                     html.Div([
                         html.Div([
-                            html.Label("Pipeline", style={
+                            html.Label("Pipeline #1", style={
                                 "textAlign": "right",
                                 "color": "#CCC9CA",
                                 "font-size": "24px",
@@ -133,19 +146,6 @@ class HTMLServer:
                                 "height": "40px",
                                 "margin-top": "5px",
                             }),
-                            html.Button("Reboot", id="reboot-button", style={
-                                "margin-top": "10px",
-                                "font-size": "14px",
-                                "color": "#161616",
-                                "background-color": "rgba(255, 204, 74, 1)",
-                                "border": "none",
-                                "padding": "8px 16px",
-                                "width": "300px",
-                                "height": "40px",
-                                "border-radius": "20px",
-                                "cursor": "pointer",
-                                "font-weight": "bold"
-                            }),
                         ], style={
                             "display": "flex",
                             "flex-direction": "column",
@@ -155,7 +155,28 @@ class HTMLServer:
                         })
                     ], style={"flex": "2"}),
                 ], style={"display": "flex", "flex-direction": "row"}),
+                html.Div([
+                    html.Button("Reboot", id="reboot-button", style={
+                        "margin-top": "10px",
+                        "font-size": "14px",
+                        "color": "#161616",
+                        "background-color": "rgba(255, 204, 74, 1)",
+                        "border": "none",
+                        "padding": "8px 16px",
+                        "width": "300px",
+                        "height": "40px",
+                        "border-radius": "20px",
+                        "cursor": "pointer",
+                        "font-weight": "bold"
+                    }),
+                ], style={
+                    "display": "flex",
+                    "justify-content": "center",
+                    "align-items": "center",
+                    "padding": "10px",
+                }),
                 html.Br(),
+                html.Div(id='fake-output', style={'display': 'none'}),
             ]),
 
             dcc.Interval(
@@ -189,12 +210,17 @@ class HTMLServer:
             [Input('update-interval', 'n_intervals')]
         )(self.update_detections)
 
+        self.app.callback(
+            Output("fake-output", "children"),
+            [Input("framecomp-slider", "value")]
+        )(self.framecomp_callback)
+
         self.server.add_url_rule('/video_feed', 'video_feed', self.video_feed)
 
         self.start_server_thread()
 
     def start_server(self):
-        self.app.run_server(port=5801, debug=False, use_reloader=False)
+        self.app.run_server(port=5801, debug=True, use_reloader=False)
 
     def start_server_thread(self):
         Thread(target=self.start_server, daemon=True).start()
@@ -208,8 +234,9 @@ class HTMLServer:
             frame = self.vision_main.get_frame()
             if frame is None:
                 continue
-
-            frame = cv2.resize(frame, (frame.shape[1] // 2, frame.shape[0] // 2))
+            
+            rs_dim = HTMLServer.framecomp_slider.valueFloat()
+            frame = cv2.resize(frame, (0, 0), fx=rs_dim, fy=rs_dim, interpolation=cv2.INTER_AREA)
 
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
@@ -227,13 +254,14 @@ class HTMLServer:
         metrics = self.get_metrics()
         return [
             html.Div([
-                html.Span(f"FPS: {metrics['framerate']:.2f}", style={
+                html.Span(f"Framerate: {metrics['framerate']:.2f} fps", style={
                     "position": "absolute", 
                     "left": "0", 
                     "bottom": "0",
                     "color": "rgba(255, 255, 255, 0.8)",
-                    "font-size": "24px",
+                    "font-size": "18px",
                     "font-weight": "regular",
+                    "font-style": "italic",
                     "padding": "5px 10px",
                 }),
                 html.Span(f"Latency: {metrics['processing_latency']:.2f} ms", style={
@@ -241,9 +269,10 @@ class HTMLServer:
                     "right": "0", 
                     "bottom": "0",
                     "color": "rgba(255, 255, 255, 0.8)",
-                    "font-size": "24px",
+                    "font-size": "18px",
                     "font-weight": "regular",
                     "padding": "5px 10px",
+                    "font-style": "italic",
                     "border-radius": "5px",
                 })
             ], style={
@@ -257,37 +286,43 @@ class HTMLServer:
         detections = self.vision_main.get_detections()
         if not detections:
             return [
-                html.Div("Nothing Detected", style={
+                html.Div("No detections", style={
                     'color': '#CCC9CA',
-                    'font-size': '20px',
+                    'font-size': '14px',
                     'text-align': 'center',
-                    'border-radius': '24px',
+                    'border-radius': '10px',
                     'border': '2px solid rgba(255, 255, 255, 0.5)',
-                    'padding': '15px',
+                    'padding': '10px',
                     'margin': '0 0px 20px 20px',
                     'display': 'flex',
                     'align-items': 'center',
-                    'gap': '10px',
+                    'gap': '10xpx',
                     'width': '100%',
                 })
             ]
         detection_items = []
-        for detection in detections:
+        for i in range(len(detections)):
+            detection = detections[i]
             detection_items.append(
                 html.Div([
-                    html.Span(f"• Distance: {detection.r:.2f} m", style={
+                    html.Span(f"Detection #{i + 1}:", style={
                         'color': '#CCC9CA',
-                        'margin-right': '10px'
+                        'margin-right': '10px',
+                        'font-weight': 'medium'
                     }),
-                    html.Span(f"• Angle: {detection.theta:.2f}°", style={
+                    html.Span(f"R {detection.r:.1f}in", style={
+                        'color': '#CCC9CA',
+                        'margin-right': '5px'
+                    }),
+                    html.Span(f"θ {detection.theta:.2f}deg", style={
                         'color': '#CCC9CA',
                         'margin-right': '10px'
                     })
                 ], style={
                     'border': '2px solid rgba(255, 255, 255, 0.5)',
-                    'border-radius': '24px',
-                    'padding': '15px',
-                    'font-size': '20px',
+                    'border-radius': '10px',
+                    'padding': '10px',
+                    'font-size': '14px',
                     'margin': '0 0px 20px 20px',
                     'display': 'flex',
                     'align-items': 'center',
@@ -297,7 +332,10 @@ class HTMLServer:
             )
         return detection_items
 
-
+    def framecomp_callback(self, value):
+        print("Slider value updated")
+        HTMLServer.framecomp_slider.setFloat(value)
+        return f'Slider value is {value}'
 
     def index_string(self):
         return """
@@ -306,7 +344,7 @@ class HTMLServer:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>MonkeySee</title>
+            <title>MonkeyVision</title>
             <style>
                 body {
                     background-color: #161616;
