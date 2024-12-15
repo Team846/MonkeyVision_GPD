@@ -5,10 +5,10 @@ from util.config import ConfigCategory
 from camera.preprocess import PROCESS_FRAME
 from util.logger import Logger
 from time import time_ns
+import time
 from typing import Tuple
 
 logger = Logger("Camera")
-pref_category = ConfigCategory("Camera")
 
 class CameraReader:
     def __init__(self):

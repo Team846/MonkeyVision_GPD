@@ -1,0 +1,20 @@
+{
+    "Preprocessing": {
+      "clahe_clip_limit": { "value": "2.0", "type": 2 },
+      "clahe_tile_grid_size": { "value": "8", "type": 1 }
+    },
+    "Detection": {
+      "min_conf": { "value": ".3", "type": 2 },
+      "max_iou": { "value": ".7", "type": 2}
+    },
+    "PartialSolution": {
+      "CAM_FOV_X_deg": { "value": "70.0", "type": 2 },
+      "CAM_FOV_Y_deg": { "value": "47.27", "type": 2 },
+      "CAM_H_in": { "value": "12.0", "type": 2 },
+      "CAM_MOUNT_H_deg": { "value": "0.0", "type": 2 },
+      "CAM_MOUNT_V_deg": { "value": "0.0", "type": 2 },
+      "CAM_X_in": { "value": "0.0", "type": 2 },
+      "CAM_Y_in": { "value": "0.0", "type": 2 },
+      "GP_H_in": { "value": "2.0", "type": 2 }
+    }
+  }

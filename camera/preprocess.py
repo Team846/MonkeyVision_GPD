@@ -13,7 +13,13 @@ clahe = cv2.createCLAHE(
 )
 
 def APPLY_CLAHE(image: MatLike) -> MatLike:
-    return clahe.apply(image)
+    global clahe
+
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+
+    lab[...,0] = clahe.apply(lab[...,0]) #apply CLAHE on L channel
+
+    return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
 def PROCESS_FRAME(image: MatLike) -> MatLike:
     image = APPLY_CLAHE(image)
