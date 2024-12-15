@@ -2,7 +2,7 @@
 import cv2
 from cv2.typing import MatLike
 from util.config import ConfigCategory, Config
-from camera.preprocess import PROCESS_FRAME
+from camera.preprocess import PROCESS_FRAME, apply_retinex_grayscale
 from util.logger import Logger
 from time import time_ns
 from typing import Tuple
@@ -28,20 +28,23 @@ class CameraReader:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+
+
         self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
         self.cap.set(cv2.CAP_PROP_EXPOSURE, -4)
 
-        self.camera_exposure = -4
+        self.camera_exposure = -2
 
     def get_frame(self) -> Tuple[MatLike, int]:
         _, frame = self.cap.read()
         ts = time_ns()
         frame, gamma = PROCESS_FRAME(frame)
         
-        new_exposure = CALCULATE_ADJUSTED_EXPOSURE(gamma, self.camera_exposure)
-        if new_exposure != self.camera_exposure:
-            self.camera_exposure = new_exposure
+        # new_exposure = CALCULATE_ADJUSTED_EXPOSURE(gamma, self.camera_exposure)
+        # if new_exposure != self.camera_exposure:
+        #     self.camera_exposure = new_exposure
 
-            self.cap.set(cv2.CAP_PROP_EXPOSURE, self.camera_exposure)
+        #     self.cap.set(cv2.CAP_PROP_EXPOSURE, self.camera_exposure)
 
         return frame, ts

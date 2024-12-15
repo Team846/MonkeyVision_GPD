@@ -64,6 +64,15 @@ class Config:
         except:
             config_logger.Error(f"Couldn't convert {self.category}.{self.key} to float")
             return 0.0
+        
+    def setFloat(self, value: float) -> None:
+        global config_logger
+        config_logger.Log(f"Setting {self.category}.{self.key} to {value}")
+        if self.typev != 2:
+            config_logger.Warn(f"Type mismatch for {self.category}.{self.key}: {self.typev} != 2")
+            return
+        self.value = str(value)
+        self.save()
 
     def __str__(self):
         return f"{self.category}.{self.key}: {self.value}"
