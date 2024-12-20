@@ -1,0 +1,1 @@
+{"Preprocessing": {"clahe_clip_limit": {"value": "2.0", "type": 2}, "clahe_tile_grid_size": {"value": "8", "type": 1}}, "Detection": {"min_conf": {"value": "0.3", "type": 2}, "max_iou": {"value": "0.5", "type": 2}}}

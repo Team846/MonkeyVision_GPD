@@ -10,7 +10,7 @@ pref_category = ConfigCategory("Detection")
 min_conf = pref_category.getFloatConfig("min_conf", 0.3)
 max_iou = pref_category.getFloatConfig("max_iou", 0.5)
 
-model = YOLO('./models/notes.onnx')
+model = YOLO('./models/best.onnx')
 
 def DETECT_TAGS(image: MatLike):
     global model
