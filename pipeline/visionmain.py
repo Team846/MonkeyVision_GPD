@@ -19,13 +19,14 @@ class VisionMain:
 
         self.frame: cv2.typing.MatLike = None
         self.detections: List[locate.partial_solution.Detection] = []
+        time.sleep(5)
 
     def execute(self):
         while True:
             frame, timestamp = self.cam.get_frame()
-            boxes = locate.detection.DETECT_TAGS(frame)
+            boxes = locate.detection.DETECT_PIECES(frame)
 
-            self.frame = locate.detection.ANNOTATE_TAGS(frame, boxes)
+            self.frame = locate.detection.ANNOTATE_PIECES(frame, boxes)
 
             self.detections = locate.partial_solution.CALCULATE_PARTIAL_SOLUTION(frame, boxes)
             self.processing_latency = (time_ns() - timestamp) / 1e9
@@ -36,6 +37,7 @@ class VisionMain:
                 end_time = time.time()
                 self.framerate = 20 / (end_time - self.start_time)
                 self.start_time = end_time
+            time.sleep(.01)
 
     def get_frame(self):
         return self.frame

@@ -58,7 +58,7 @@ def msr(img, sigma_scales = [15, 80, 250], low_per = 1, high_per = 1): #multisca
 
 if __name__ == "__main__":
     # vision_main = VisionMain()
-    # server = pipeline.htmlserver.HTMLServer(vision_main)
+    ## server = pipeline.htmlserver.HTMLServer(vision_main)
     # vision_main.execute()
     result = msr(image)
     cv2.imwrite("result.jpeg", result)

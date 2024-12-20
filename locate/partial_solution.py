@@ -8,16 +8,7 @@ import math
 import json
 import os
 
-TAG_FILE_PATH = "tags.json"
-
 logger = Logger("PartialSolution")
-
-loaded_tags = {}
-if not os.path.exists(TAG_FILE_PATH):
-    logger.Warn("Couldn't find existing AprilTag data file")
-with open(TAG_FILE_PATH, 'r') as tag_file:
-    loaded_tags = json.load(tag_file)
-    logger.Log(f"Loaded tags: {loaded_tags}")
 
 pref_category = ConfigCategory("PartialSolution")
 
