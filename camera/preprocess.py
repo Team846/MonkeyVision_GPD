@@ -3,54 +3,59 @@ import numpy as np
 from cv2.typing import MatLike
 from util.config import ConfigCategory, Config
 from typing import Tuple
-import time
+from numba import njit
 
 pref_category = ConfigCategory("Preprocessing")
 
-clahe_clip_limit = pref_category.getFloatConfig("clahe_clip_limit", 2.0)
-clahe_tile_grid_size = pref_category.getIntConfig("clahe_tile_grid_size", 8)
+acc_num_bins = pref_category.getIntConfig("acc_num_bins", 100)
+target_brightness = pref_category.getIntConfig("target_brightness", 155)
+min_corr_strength = pref_category.getFloatConfig("min_corr_strength", 0.1)
+corr_divisor = pref_category.getFloatConfig("corr_divisor", 400.0)
+divergence_gain = pref_category.getFloatConfig("divergence_gain", 1.5)
 
-target_brightness = pref_category.getIntConfig("target_brightness", 120)
+@njit
+def COMPUTE_CORRECTION_MATRIX(image: np.ndarray, bins_per_side: int, target_brightness: int) -> np.ndarray:
+    height, width = image.shape
+    bin_height = height // bins_per_side
+    bin_width = width // bins_per_side
 
-clahe = cv2.createCLAHE(
-    clipLimit=clahe_clip_limit.valueFloat(),
-    tileGridSize=(clahe_tile_grid_size.valueInt(), clahe_tile_grid_size.valueInt()),
-)
+    bin_means = np.array([
+        np.mean(image[i * bin_height:(i + 1) * bin_height, j * bin_width:(j + 1) * bin_width])
+        for i in range(bins_per_side) for j in range(bins_per_side)
+    ]).reshape(bins_per_side, bins_per_side)
 
-def APPLY_CLAHE(image: MatLike) -> MatLike:
-    return clahe.apply(image)
+    correction_matrix = target_brightness - bin_means
 
+    return correction_matrix
 
-def CALCULATE_GAMMA_CORRECTION(image: np.ndarray) -> float:
-    h, w = image.shape[:2]
-    step = max(h * w // 100, 1)
-    sampled_indices = np.arange(0, h * w, step)[:100]
-    sampled_gray = image.reshape(-1)[sampled_indices]
+def BIN_BASED_CORRECT(image: np.ndarray, acc_num_bins: int, target_brightness: int, min_corr_strength: float, corr_divisor: float) -> np.ndarray:
+    height, width = image.shape
+    num_bins = acc_num_bins
+    bins_per_side = int(np.sqrt(num_bins))
 
-    current_brightness = np.mean(sampled_gray)
+    mean = np.mean(image)
+    corr_strength = abs(target_brightness - mean) / corr_divisor + min_corr_strength
 
-    if current_brightness > 0:
-        target_brightness_value = target_brightness.valueInt()
+    correction_matrix = COMPUTE_CORRECTION_MATRIX(image, bins_per_side, target_brightness)
 
-        return np.log(current_brightness / 255.0) / np.log(target_brightness_value / 255.0)
-    return 1.0
+    correction_matrix = cv2.blur(correction_matrix, (3, 3), 0)
 
+    correction_matrix = cv2.resize(correction_matrix, (width, height), interpolation=cv2.INTER_LINEAR)
 
-def APPLY_GAMMA_CORRECTION(image: MatLike) -> Tuple[MatLike, float]:
-    gamma = CALCULATE_GAMMA_CORRECTION(image)
+    return image.astype(np.float32) + correction_matrix * corr_strength
 
-    inv_gamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in range(256)]).astype("uint8")
+@njit
+def DIVERGING_MOD(image: np.ndarray, divergence_gain: float) -> np.ndarray:
+    mean = np.mean(image)
 
-    image = cv2.LUT(image, table)
+    corrected_image = image * ((divergence_gain * (image - mean) + mean) / mean)
+    corrected_image = np.clip(corrected_image, 0, 255).astype(np.uint8)
 
-    return image, gamma
+    return corrected_image
 
 def PROCESS_FRAME(image: MatLike) -> Tuple[MatLike, float]:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = BIN_BASED_CORRECT(image, acc_num_bins.valueInt(), target_brightness.valueInt(), min_corr_strength.valueFloat(), corr_divisor.valueFloat())
+    image = DIVERGING_MOD(image, divergence_gain.valueFloat())
 
-    image, gamma = APPLY_GAMMA_CORRECTION(image)
-
-    image = APPLY_CLAHE(image)
-
-    return image, gamma
+    return image

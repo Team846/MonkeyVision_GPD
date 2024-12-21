@@ -23,11 +23,13 @@ class VisionMain:
     def execute(self):
         while True:
             frame, timestamp = self.cam.get_frame()
+
             corners, ids = localization.detection.DETECT_TAGS(frame)
 
             self.frame = localization.detection.ANNOTATE_TAGS(frame, corners, ids)
 
             self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(frame, corners, ids)
+
             self.processing_latency = (time_ns() - timestamp) / 1e9
 
             self.frame_count += 1
