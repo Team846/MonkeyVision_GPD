@@ -74,6 +74,15 @@ class Config:
         self.value = str(value)
         self.save()
 
+    def setInt(self, value: int) -> None:
+        global config_logger
+        config_logger.Log(f"Setting {self.category}.{self.key} to {value}")
+        if self.typev != 1:
+            config_logger.Warn(f"Type mismatch for {self.category}.{self.key}: {self.typev} != 1")
+            return
+        self.value = str(value)
+        self.save()
+
     def __str__(self):
         return f"{self.category}.{self.key}: {self.value}"
     def __repr__(self):

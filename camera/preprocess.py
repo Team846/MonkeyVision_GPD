@@ -7,7 +7,7 @@ from numba import njit
 
 pref_category = ConfigCategory("Preprocessing")
 
-acc_num_bins = pref_category.getIntConfig("acc_num_bins", 100)
+acc_num_bins = pref_category.getIntConfig("acc_num_bins", 1200)
 target_brightness = pref_category.getIntConfig("target_brightness", 155)
 min_corr_strength = pref_category.getFloatConfig("min_corr_strength", 0.1)
 corr_divisor = pref_category.getFloatConfig("corr_divisor", 400.0)
@@ -59,3 +59,27 @@ def PROCESS_FRAME(image: MatLike) -> Tuple[MatLike, float]:
     image = DIVERGING_MOD(image, divergence_gain.valueFloat())
 
     return image
+
+def GET_DIVERGENCE_GAIN() -> float:
+    return divergence_gain.valueFloat()
+
+def SET_DIVERGENCE_GAIN(value: float) -> None:
+    divergence_gain.setFloat(value)
+
+def GET_TARGET_BRIGHTNESS() -> int:
+    return target_brightness.valueInt()
+
+def SET_TARGET_BRIGHTNESS(value: int) -> None:
+    target_brightness.setInt(value)
+
+def GET_NUM_BINS() -> int:
+    return acc_num_bins.valueInt()
+
+def SET_NUM_BINS(value: int) -> None:
+    acc_num_bins.setInt(value)
+
+def GET_MIN_CORR_STRENGTH() -> float:
+    return min_corr_strength.valueFloat()
+
+def SET_MIN_CORR_STRENGTH(value: float) -> None:
+    min_corr_strength.setFloat(value)

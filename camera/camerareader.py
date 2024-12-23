@@ -13,9 +13,10 @@ class CameraReader:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
 
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+        self.cap.set(cv2.CAP_PROP_FPS, 120.0)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
 
     def get_frame(self) -> Tuple[MatLike, int]:
         ret, frame = self.cap.read()
