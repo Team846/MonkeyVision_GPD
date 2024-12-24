@@ -4,12 +4,17 @@ import time
 import localization.detection
 import localization.partial_solution
 from time import time_ns
-from threading import Thread
 from typing import List
+import platform
 
 class VisionMain:
-    def __init__(self):
-        self.cam = CameraReader()
+    def __init__(self, pipeline_number: int):
+        self.pipeline_number = pipeline_number
+
+        if platform.system() == "Windows" or platform.system() == "Darwin":
+            self.cam = CameraReader(0)
+        else:
+            self.cam = CameraReader(f"ATCam{pipeline_number}")
 
         self.frame_count = 0
         self.start_time = time.time()
@@ -50,3 +55,6 @@ class VisionMain:
     
     def get_processing_latency(self):
         return self.processing_latency
+    
+    def get_pipeline_number(self):
+        return self.pipeline_number

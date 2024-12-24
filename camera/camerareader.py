@@ -10,8 +10,8 @@ from typing import Tuple
 logger = Logger("Camera")
 
 class CameraReader:
-    def __init__(self):
-        self.cap = cv2.VideoCapture(0)
+    def __init__(self, camera_id: str | int = 0):
+        self.cap = cv2.VideoCapture(camera_id)
 
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
         self.cap.set(cv2.CAP_PROP_FPS, 120.0)

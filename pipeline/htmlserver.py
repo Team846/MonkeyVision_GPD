@@ -222,7 +222,7 @@ class HTMLServer:
                 }),
                 html.Div([
                 html.Div([
-                    html.Label("Pipeline #1", style={
+                    html.Label(f"Pipeline #{self.vision_main.get_pipeline_number()}", style={
                     "textAlign": "right",
                     "color": "#CCC9CA",
                     "font-size": "24px",
