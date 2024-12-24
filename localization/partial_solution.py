@@ -29,11 +29,15 @@ CAM_X = pref_category.getFloatConfig("CAM_X_in", 0.0)
 CAM_Y = pref_category.getFloatConfig("CAM_Y_in", 0.0)
 
 class Detection:
-    def __init__(self, r_ground: float, theta_h: float, tagX: float, tagY: float):
+    def __init__(self, r_ground: float, theta_h: float, tagX: float, tagY: float, tag:int):
         self.r = r_ground
         self.theta = theta_h
         self.tagX = tagX
         self.tagY = tagY
+        self.tag=tag
+
+    def getTag(self) ->int:
+        return self.tag
 
     def getR(self) -> float:
         return self.r
@@ -45,7 +49,7 @@ class Detection:
         return self.tagY
     
     def __str__(self) -> str:
-        return f"Detection ({self.tagX, self.tagY}): ({self.r:.2f}, {self.theta:.2f})"
+        return f"Detection Tag {self.tag}: ({self.tagX, self.tagY}): ({self.r:.2f}, {self.theta:.2f} deg)"
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -79,9 +83,9 @@ def CALCULATE_PARTIAL_SOLUTION(image: MatLike, all_corners, all_IDs) -> List[Det
 
         theta_h: float = (x_diff / image.shape[1]) * CAM_FOV_X.valueFloat() + CAM_ANGLE_H.valueFloat()
         theta_v: float = (y_diff / image.shape[0]) * CAM_FOV_Y.valueFloat() + CAM_ANGLE_V.valueFloat()
-        r_ground: float = (h_tag - CAM_H.valueFloat()) / math.tan(math.degrees(theta_v))
+        r_ground: float = (h_tag - CAM_H.valueFloat()) / math.tan(math.radians(theta_v))
 
-        result.append(Detection(r_ground, theta_h, x_tag, y_tag))
+        result.append(Detection(r_ground, theta_h, x_tag, y_tag, tID))
 
     return result
     

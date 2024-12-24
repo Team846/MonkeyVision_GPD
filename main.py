@@ -1,4 +1,5 @@
 import pipeline.htmlserver
+import pipeline.ntables
 from pipeline.visionmain import VisionMain
 import argparse
 

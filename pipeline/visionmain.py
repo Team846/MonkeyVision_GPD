@@ -3,6 +3,7 @@ import cv2
 import time
 import localization.detection
 import localization.partial_solution
+import pipeline.ntables
 from time import time_ns
 from typing import List
 import platform
@@ -24,6 +25,7 @@ class VisionMain:
 
         self.frame: cv2.typing.MatLike = None
         self.detections: List[localization.partial_solution.Detection] = []
+        self.ntables : pipeline.ntables.NTables = pipeline.ntables.NTables()
 
     def execute(self):
         while True:
@@ -43,6 +45,7 @@ class VisionMain:
                 end_time = time.time()
                 self.framerate = 20 / (end_time - self.start_time)
                 self.start_time = end_time
+            self.ntables.execute()
 
     def get_frame(self):
         return self.frame
