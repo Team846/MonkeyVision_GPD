@@ -8,6 +8,7 @@ from threading import Thread
 from util.config import ConfigCategory, Config
 import os
 from camera.preprocess import GET_DIVERGENCE_GAIN, SET_DIVERGENCE_GAIN, GET_TARGET_BRIGHTNESS, SET_TARGET_BRIGHTNESS, GET_NUM_BINS, SET_NUM_BINS, GET_MIN_CORR_STRENGTH, SET_MIN_CORR_STRENGTH
+from localization.detection import GET_THRESH_STEP, SET_THRESH_STEP, GET_THRESH_WIN, SET_THRESH_WIN
 
 class HTMLServer:
     config_category = ConfigCategory("HTMLServer")
@@ -144,10 +145,48 @@ class HTMLServer:
                 dcc.Slider(
                     id="divergence-gain-slider",
                     min=0.5,
-                    max=2.5,
+                    max=4.0,
                     step=0.1,
                     value=GET_DIVERGENCE_GAIN(),
-                    marks={0.5: '0.5', 2.5: '2.5'},
+                    marks={0.5: '0.5', 4.0: '4.0'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Thresholding Steps", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="thresh-step-slider",
+                    min=11,
+                    max=33,
+                    step=2,
+                    value=GET_THRESH_STEP(),
+                    marks={11: '11', 33: '33'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Maximum threshold window", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="max-thresh-slider",
+                    min=11,
+                    max=33,
+                    step=2,
+                    value=GET_THRESH_WIN(),
+                    marks={11: '11', 33: '33'},
                     tooltip={"placement": "bottom", "always_visible": True},
                     className="funky-slider"
                 ),
@@ -242,6 +281,8 @@ class HTMLServer:
             html.Div(id='fake-output-4', style={'display': 'none'}),
             html.Div(id='fake-output-5', style={'display': 'none'}),
             html.Div(id='fake-output-6', style={'display': 'none'}),
+            html.Div(id='fake-output-7', style={'display': 'none'}),
+            html.Div(id='fake-output-8', style={'display': 'none'}),
             ]),
 
             dcc.Interval(
@@ -304,6 +345,16 @@ class HTMLServer:
             Output("fake-output-6", "children"),
             [Input("divergence-gain-slider", "value")]
         )(self.divergence_gain_callback)
+
+        self.app.callback(
+            Output("fake-output-7", "children"),
+            [Input("thresh-step-slider", "value")]
+        )(self.thresh_step_callback)
+
+        self.app.callback(
+            Output("fake-output-8", "children"),
+            [Input("max-thresh-slider", "value")]
+        )(self.max_thresh_callback)
 
         self.server.add_url_rule('/video_feed', 'video_feed', self.video_feed)
 
@@ -450,6 +501,16 @@ class HTMLServer:
     def divergence_gain_callback(self, value):
         print("Divergence gain value updated")
         SET_DIVERGENCE_GAIN(value)
+        return f'Slider value is {value}'
+    
+    def thresh_step_callback(self, value):
+        print("Thresh step value updated")
+        SET_THRESH_STEP(value)
+        return f'Slider value is {value}'
+    
+    def max_thresh_callback(self, value):
+        print("Max thresh win value updated")
+        SET_THRESH_WIN(value)
         return f'Slider value is {value}'
 
     def index_string(self):
