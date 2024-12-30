@@ -366,7 +366,7 @@ class HTMLServer:
         return f'Rebooting system'
 
     def start_server(self):
-        self.app.run_server(host="0.0.0.0", port=5801, debug=True, use_reloader=False)
+        self.app.run_server(host="0.0.0.0", port=5800+self.vision_main.get_pipeline_number(), debug=True, use_reloader=False)
 
     def start_server_thread(self):
         Thread(target=self.start_server, daemon=True).start()

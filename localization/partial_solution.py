@@ -66,14 +66,14 @@ def CALCULATE_PARTIAL_SOLUTION(image: MatLike, all_corners, all_IDs) -> List[Det
             continue
 
         corners = corners.flatten()
-        x_avg: float = (corners[0] + corners[2] + corners[4] + corners[6]) / 4
-        y_avg: float = (corners[1] + corners[3] + corners[5] + corners[7]) / 4
+        x_top_left: float = (corners[0])
+        y_top_left: float = (corners[1])
 
         x_center: float = image.shape[1] / 2
         y_center: float = image.shape[0] / 2
 
-        x_diff: float = x_avg - x_center
-        y_diff: float = y_avg - y_center
+        x_diff: float = x_top_left - x_center
+        y_diff: float = y_top_left - y_center
 
         tag_data = loaded_tags.get(str(tID), {})
 

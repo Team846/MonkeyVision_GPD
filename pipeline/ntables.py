@@ -5,9 +5,9 @@ from pipeline.visionmain import VisionMain
 from networktables import NetworkTables
 
 class NTables:
-    def __init__(self):
+    def __init__(self, pipeline_number):
         NetworkTables.initialize(server='10.8.46.2')
-        self.table = NetworkTables.getTable("AprilTags")
+        self.table = NetworkTables.getTable(f"AprilTagsCam{pipeline_number}")
 
     def execute(self, detections, latency):
         angles:List[float]=[]
