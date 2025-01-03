@@ -4,7 +4,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
-#Go to tempcopy for note detector, coneMatcher for cone detector
+##USES LIVE CAMERA FOOTAGE TO DETECT NOTES ONLY
 
 def rotate_image(image, angle):
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -17,7 +17,7 @@ def load_templates(template_folder, num_templates):
         cv2.imread(f"{template_folder}/{i}.jpg", cv2.IMREAD_GRAYSCALE) for i in range(num_templates)
     ]
 
-def process_template(template, img, threshold=0.4):
+def process_template(template, img, threshold=0.55):
     res = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, max_loc = cv2.minMaxLoc(res)
 
@@ -29,9 +29,9 @@ def process_template(template, img, threshold=0.4):
         return max_val, max_loc_centered
     return None, None
 
-def main(imgnm):
+def main(original_img):
     templates = load_templates("template", 3)
-    original_img = cv2.imread(imgnm)
+    
 
     original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
     original_img = cv2.resize(original_img, (400, 300))
@@ -64,18 +64,32 @@ def main(imgnm):
 
     best_rotated_img = rotate_image(original_img, best_angle)
     best_rotated_img = cv2.cvtColor(best_rotated_img, cv2.COLOR_GRAY2BGR)
-    if highest > 0.4:
+    if highest > 0.55:
         cv2.circle(best_rotated_img, max_loc_, 5, (0, 0, 255), 2)
 
     cv2.imshow("Result", best_rotated_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    
 
     return best_rotated_img
 
 if __name__ == "__main__":
     os.makedirs("testoutput", exist_ok=True)
-    for imgnm in os.listdir("testimgs"):
-        if imgnm.endswith(".jpg"):
-            res = main(f"testimgs/{imgnm}")
-            cv2.imwrite(f"testoutput/{imgnm}", res)
+    # for imgnm in os.listdir("testimgs"):
+    #     if imgnm.endswith(".jpg"):
+    #         res = main(f"testimgs/{imgnm}")
+    #         cv2.imwrite(f"testoutput/{imgnm}", res)
+
+    camera = cv2.VideoCapture(0)
+
+    while True:
+        ret, frame = camera.read()
+
+        frame = main(frame)
+
+
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    cv2.destroyAllWindows()
+
+
