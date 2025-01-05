@@ -40,9 +40,9 @@ def rotate_image(image, angle): #updated, now works with colored images!!! :)))
     )
 
     if num_channels == 1:
-        return result  
+        return result, rot_mat, offset_x, offset_y, height, width
     else:
-        return result
+        return result, rot_mat,    offset_x, offset_y, height, width
 
 
 def load_templates(template_folder, num_templates):
@@ -107,7 +107,7 @@ def main(original_img_path):
     t0 = time.time()
 
     for angle in range(0, 360, 45):
-        rotated_img = rotate_image(gray_img, angle)
+        rotated_img, _, offset_x, offset_y, height, width = rotate_image(gray_img, angle)
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
             results = executor.map(lambda tpl: process_template(tpl, rotated_img, templates), [i for i in range(len(templates))])
     
@@ -127,10 +127,10 @@ def main(original_img_path):
     print("Index of best match:", i_highest)
     print("Best angle:", best_angle)
 
-    best_rotated_img = rotate_image(gray_img, best_angle)
+    best_rotated_img, best_rot_mat, offset_x, offset_y, height, width = rotate_image(gray_img, best_angle)
     best_rotated_img = cv2.cvtColor(best_rotated_img, cv2.COLOR_GRAY2BGR) 
     
-    color_rotated_img = rotate_image(original_img, best_angle)
+    color_rotated_img, color_rot_mat, _, _, _, _ = rotate_image(original_img, best_angle)
     color_rotated_img = cv2.resize(color_rotated_img, (best_rotated_img.shape[1], best_rotated_img.shape[0]))
 
 
@@ -171,18 +171,23 @@ def main(original_img_path):
         print("START POINT" + (str)(start_point))
 
         if (region.shape[0] > 0 and region.shape[1] > 0 and check_hsv(region)):
-            cv2.circle(best_rotated_img, max_loc_, 5, (255, 0, 255), 2)
-        #cv2.circle(best_rotated_img, max_loc_, 5, (0, 255, 0), 2)
-        
+            cv2.circle(best_rotated_img, max_loc_, 5, (255, 0, 255), 2)        
         cv2.rectangle(best_rotated_img, start_point, end_point, color, thickness)
 
         
         cv2.imwrite("mask.jpg", mask)
+        inverse_rotation_matrix = cv2.invertAffineTransform(best_rot_mat)
 
-    cv2.imshow("Result", best_rotated_img)
-    
+        original_position_img = cv2.warpAffine(best_rotated_img, inverse_rotation_matrix, (original_img.shape[1], original_img.shape[0]))
+        
+        # remove the padding
+        original_position_img = original_position_img[offset_y:offset_y + height, offset_x:offset_x + width]
 
-    return best_rotated_img
+        cv2.imshow("Original Position Image", original_position_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()    
+
+        return original_position_img
 
 if __name__ == "__main__":
     os.makedirs("testoutput", exist_ok=True)
