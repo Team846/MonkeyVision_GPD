@@ -6,6 +6,8 @@ import numpy as np
 
 # USES TEST IMAGES TO DETECT CONES ONLY
 
+#getting stretched out bc of resize of gray img.. need to resize to original img dimensions instead
+
 def rotate_image(image, angle): #updated, now works with colored images!!! :)))
     if len(image.shape) == 2:  # for grascale images
         height, width = image.shape
@@ -60,10 +62,16 @@ def process_template(index, img, templates):
         max_loc[1] + template.shape[0] // 2,
     )
     return max_val, max_loc_centered, index
-
+#cone yellows
 upper_yellow = np.array([80, 255, 255], dtype = np.uint8)
 
 lower_yellow = np.array([10, 100, 60], dtype = np.uint8)
+
+#find algae teals
+upper_teal = np.array([200, 255, 120], dtype = np.uint8)
+
+lower_teal = np.array([90, 140, 30], dtype = np.uint8)
+
 
 def check_hsv(region):
 
@@ -78,26 +86,45 @@ def check_hsv(region):
 
     hsvRegion = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 
-    mask = cv2.inRange(hsvRegion, lower_yellow, upper_yellow)
+    mask = cv2.inRange(hsvRegion, lower_teal, upper_teal)
 
 
-    yellow_pixels = cv2.countNonZero(mask)
+    selected_pixels = cv2.countNonZero(mask)
     total_pixels = region.shape[0] * region.shape[1]
-    percentage = (yellow_pixels/total_pixels)*100
+    percentage = (selected_pixels/total_pixels)*100
     cv2.imwrite("r.jpg", mask)
-    print("yellow pixels:")
-    print(yellow_pixels)
-    return percentage >= 30
+    print("selected pixels:")
+    print(selected_pixels)
+    print("percentage: ")
+    print(percentage)
+    return percentage >= 20
 
 def main(original_img_path):
-    global lower_yellow, upper_yellow
+    #global lower_teal, upper_teal
 
-    templates = load_templates("template", 3)
+    templates = load_templates("template", 6)
 
     original_img = cv2.imread(original_img_path)
-
+    print("PATH: ")
+    print(original_img_path)
+    
+    if (original_img is None):
+        return
     gray_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
-    gray_img = cv2.resize(gray_img, (400, 300))
+    height, width, channels = original_img.shape
+    gray_img = cv2.resize(gray_img, (width, height))
+    gray_height, gray_width = gray_img.shape
+    print(" HEIGHT: ")
+    print(height)
+    print(" WIDTH: ")
+    print(width)
+    
+    print("GRAY HEIGHT: ")
+    print(gray_height)
+    print("GRAY WIDTH: ")
+    print(gray_width)
+
+    "testimgs/14.jpg"
 
     highest = 0
     max_loc_ = (0, 0)
@@ -110,8 +137,7 @@ def main(original_img_path):
         rotated_img, _, offset_x, offset_y, height, width = rotate_image(gray_img, angle)
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
             results = executor.map(lambda tpl: process_template(tpl, rotated_img, templates), [i for i in range(len(templates))])
-    
-
+        
         for _,(max_val, max_loc_centered, i) in enumerate(results):
             if max_val and max_val > highest:
                 highest = max_val
@@ -155,7 +181,7 @@ def main(original_img_path):
         thickness = 2
         cv2.circle(best_rotated_img, start_point, 5, (0, 0, 255), 2)
 
-        mask = cv2.inRange(color_rotated_img, lower_yellow, upper_yellow)
+        mask = cv2.inRange(color_rotated_img, lower_teal, upper_teal)
         mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
         mask = cv2.resize(mask, (best_rotated_img.shape[1], best_rotated_img.shape[0]))
 
@@ -183,18 +209,26 @@ def main(original_img_path):
         # remove the padding
         original_position_img = original_position_img[offset_y:offset_y + height, offset_x:offset_x + width]
 
-        cv2.imshow("Original Position Image", original_position_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()    
+        # cv2.imshow("Original Position Image", original_position_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()    
 
         return original_position_img
+    else:
+        return original_img
 
 if __name__ == "__main__":
     os.makedirs("testoutput", exist_ok=True)
-    for imgnm in os.listdir("testimgs"):
-        if imgnm.endswith(".jpg"):
-            res = main(f"testimgs/{imgnm}")
-            cv2.imwrite(f"testoutput/{imgnm}", res)
+    res = main("/Users/rhea/Downloads/Software/Vision(GPD)/MonkeyVision_GPD/testimgs/1.jpg")
+    # print(res)
+    cv2.imwrite("./testoutput/1.png", res)
+    # for imgnm in os.listdir("testimgs"):
+    #     if imgnm.endswith(".jpg"):
+    #         print("IMAGE NAME: ")
+            
+    #         print(imgnm)
+    #         res = main(f"./testimgs/{imgnm}")
+    #         cv2.imwrite(f"./testoutput/{imgnm}", res)
 
     # #LIVE CAMERA CODE: 
     # camera = cv2.VideoCapture(0)

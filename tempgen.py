@@ -1,13 +1,13 @@
 import cv2
 import os
 
-img = cv2.imread("crop_img2.jpg")
-img2 = cv2.imread("crop_img.jpg")
+img = cv2.imread("./testimgs/1.jpg")
+#img2 = cv2.imread("IMG_1180.jpg")
 
 height, width = img.shape[:2]
 
 sizes = []
-for x in [48, 56, 64, 72, 80]: # set sizes here
+for x in [48, 56, 64, 72, 80, 160, 320, 400]: # set sizes here
     y = int(x/2 + ((x / width) * height)/2)
     sizes.append((x, y))
 
