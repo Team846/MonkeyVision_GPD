@@ -31,7 +31,7 @@ def runPipeline(frame):
     contours, _ = cv2.findContours(
         img_threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
     )
-
+    
     for i in range(len(contours)):
         if cv2.contourArea(contours[i]) < 4:
             continue
