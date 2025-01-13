@@ -1,7 +1,7 @@
 
 import cv2
 from cv2.typing import MatLike
-from util.config import ConfigCategory, Config
+# from util.config import ConfigCategory, Config
 from camera.preprocess import PROCESS_FRAME
 from util.logger import Logger
 from time import time_ns, sleep
@@ -11,8 +11,7 @@ logger = Logger("Camera")
 
 class CameraReader:
     def __init__(self, camera_id: str | int = 0):
-        self.cap = cv2.VideoCapture(camera_id)
-
+        self.cap = cv2.VideoCapture(f"/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._{camera_id}_{camera_id}-video-index0")
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
         self.cap.set(cv2.CAP_PROP_FPS, 120.0)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)

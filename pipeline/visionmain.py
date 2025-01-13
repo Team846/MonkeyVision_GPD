@@ -25,10 +25,15 @@ class VisionMain:
 
         self.frame: cv2.typing.MatLike = None
         self.detections: List[localization.partial_solution.Detection] = []
-        self.ntables : pipeline.ntables.NTables = pipeline.ntables.NTables()
+        self.ntables : pipeline.ntables.NTables = pipeline.ntables.NTables(pipeline_number)
+        self.frame_num=0
+        localization.partial_solution.SET_CAM(pipeline_number)
 
     def execute(self):
         while True:
+            self.frame_num+=1
+            self.frame_num%=500
+            self.ntables.updateFrameNum(self.frame_num)
             frame, timestamp = self.cam.get_frame()
 
             corners, ids = localization.detection.DETECT_TAGS(frame)
@@ -45,7 +50,7 @@ class VisionMain:
                 end_time = time.time()
                 self.framerate = 20 / (end_time - self.start_time)
                 self.start_time = end_time
-            self.ntables.execute()
+            self.ntables.execute(self.detections, self.processing_latency)
 
     def get_frame(self):
         return self.frame

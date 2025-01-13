@@ -1,13 +1,13 @@
 import cv2
 from threading import Thread
 from typing import List
-from pipeline.visionmain import VisionMain
 from networktables import NetworkTables
 
 class NTables:
     def __init__(self, pipeline_number):
         NetworkTables.initialize(server='10.8.46.2')
         self.table = NetworkTables.getTable(f"AprilTagsCam{pipeline_number}")
+        pass
 
     def execute(self, detections, latency):
         angles:List[float]=[]
@@ -21,3 +21,9 @@ class NTables:
         self.table.putNumberArray("distances", distances)
         self.table.putNumberArray("tags", tags)
         self.table.putNumber("tl", latency)
+        pass
+
+    def updateFrameNum(self, frame_num):
+        self.table.putNumber("curFrameNum", frame_num)
+        pass
+

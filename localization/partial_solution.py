@@ -18,15 +18,26 @@ with open(TAG_FILE_PATH, 'r') as tag_file:
     loaded_tags = json.load(tag_file)
     logger.Log(f"Loaded tags: {loaded_tags}")
 
-pref_category = ConfigCategory("PartialSolution")
 
-CAM_FOV_X = pref_category.getFloatConfig("CAM_FOV_X_deg", 70.0)
-CAM_FOV_Y = pref_category.getFloatConfig("CAM_FOV_Y_deg", 47.27)
-CAM_ANGLE_H = pref_category.getFloatConfig("CAM_MOUNT_H_deg", 0.0)
-CAM_ANGLE_V = pref_category.getFloatConfig("CAM_MOUNT_V_deg", 0.0)
-CAM_H = pref_category.getFloatConfig("CAM_H_in", 12.0)
-CAM_X = pref_category.getFloatConfig("CAM_X_in", 0.0)
-CAM_Y = pref_category.getFloatConfig("CAM_Y_in", 0.0)
+CAM_FOV_X=0
+CAM_FOV_Y =0
+CAM_ANGLE_H =0
+CAM_ANGLE_V = 0
+CAM_H = 0
+CAM_X =0
+CAM_Y =0
+
+def SET_CAM(pipeline: int):
+
+    pref_category = ConfigCategory(f"PartialSolution{pipeline}")
+    global CAM_FOV_X, CAM_FOV_Y, CAM_ANGLE_H, CAM_ANGLE_V, CAM_H, CAM_X, CAM_Y
+    CAM_FOV_X = pref_category.getFloatConfig("CAM_FOV_X_deg", 70.0)
+    CAM_FOV_Y = pref_category.getFloatConfig("CAM_FOV_Y_deg", 47.27)
+    CAM_ANGLE_H = pref_category.getFloatConfig("CAM_MOUNT_H_deg", 0.0)
+    CAM_ANGLE_V = pref_category.getFloatConfig("CAM_MOUNT_V_deg", 0.0)
+    CAM_H = pref_category.getFloatConfig("CAM_H_in", 12.0)
+    CAM_X = pref_category.getFloatConfig("CAM_X_in", 0.0)
+    CAM_Y = pref_category.getFloatConfig("CAM_Y_in", 0.0)
 
 class Detection:
     def __init__(self, r_ground: float, theta_h: float, tagX: float, tagY: float, tag:int):
@@ -66,21 +77,20 @@ def CALCULATE_PARTIAL_SOLUTION(image: MatLike, all_corners, all_IDs) -> List[Det
             continue
 
         corners = corners.flatten()
-        x_top_left: float = (corners[0])
-        y_top_left: float = (corners[1])
+        x_top_left: float = (corners[4])
+        y_top_left: float = (corners[5])
 
         x_center: float = image.shape[1] / 2
         y_center: float = image.shape[0] / 2
 
         x_diff: float = x_top_left - x_center
-        y_diff: float = y_top_left - y_center
+        y_diff: float = y_center-y_top_left
 
         tag_data = loaded_tags.get(str(tID), {})
 
         h_tag = float(tag_data.get("h", "54.0"))
         x_tag = float(tag_data.get("x", "0.0"))
         y_tag = float(tag_data.get("y", "0.0"))
-
         theta_h: float = (x_diff / image.shape[1]) * CAM_FOV_X.valueFloat() + CAM_ANGLE_H.valueFloat()
         theta_v: float = (y_diff / image.shape[0]) * CAM_FOV_Y.valueFloat() + CAM_ANGLE_V.valueFloat()
         r_ground: float = (h_tag - CAM_H.valueFloat()) / math.tan(math.radians(theta_v))

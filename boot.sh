@@ -1,3 +1,4 @@
 source /home/orangepi/MonkeyVision_AT/at_env/bin/activate
 cd /home/orangepi/MonkeyVision_AT/
-python main.py --pipeline 1
+python main.py --pipeline 1 &
+python main.py --pipeline 2
