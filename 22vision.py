@@ -113,16 +113,13 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     y = y0 + ap * np.cos(t) * np.sin(phi) + bp * np.sin(t) * np.cos(phi)
     return x, y
 
-# def 
-
-# convert from pixels to angles
-# screen width (px) = 320
-# screen height (px) = 240
-# screen FOV x (deg) = 59.6
-# screen FOV y (deg) = 49.7
-def px_to_deg(cx, cy):
-    tx = ((cx - 160.0) / 320.0) * 59.6
-    ty = ((cy - 120.0) / 240.0) * 49.7
+def px_to_deg(frame, cx, cy):
+    w = frame.shape[0]
+    h = frame.shape[1]
+    FOV_X = 59.6
+    FOV_Y = 49.7
+    tx = ((cx - (w/2)) / w) * FOV_X
+    ty = ((cy - (h/2)) / h) * FOV_Y
     return tx, -ty
 
 def draw_point(image, x, y):
@@ -131,88 +128,80 @@ def draw_point(image, x, y):
 def draw_point_2(image, x, y):
     cv2.circle(image, (int(x), int(y)), 10, (0,0, 255), cv2.FILLED)
 
-# runPipeline() is called every frame by Limelight's backend.
+def ellipse_detect(frame, contour):
+    if cv2.contourArea(contour) < 4: return 0.0, 0.0
+
+    points = []
+    for coord in contour:
+        points.append(coord[0])
+
+    x = []
+    y = []
+    for point in points:
+        x.append(point[0])
+        y.append(point[1])
+    e = fit_ellipse(np.array(x), np.array(y))
+    params = cart_to_pol(e)
+    
+    if params is None: return 0.0, 0.0
+
+    if (params[4] > 0.5):
+        return 0.0, 0.0
+
+    x, y = get_ellipse_pts(params)
+    for i in range(len(x)):
+        draw_point_2(frame, x[i], y[i])
+    max = 9999
+    for i in range(len(y)):
+        if y[i] < max: max = y[i]
+
+    draw_point(frame, int(params[0]), int(params[1] - params[3]))
+
+    tx, ty = px_to_deg(params[0], abs(max))
+
+    return tx, ty
+
+
 def runPipeline(frame):
     try:
-        # convert the input frame to the HSV color space
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         upper =  np.array([90, 200, 255], dtype = np.uint8)
         lower = np.array([75, 75, 0], dtype = np.uint8)
 
         img_threshold = cv2.inRange(img_hsv, lower, upper)
-        
-        cv2.imshow("mask.jpg", img_threshold)
+        img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
 
-        # find contours in the new binary image
+        img_threshold[img_threshold > 3] = 255
+
+        cv2.imshow("threshold.jpg", img_threshold)
+
         contours, _ = cv2.findContours(img_threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    
+        ellipses = []
+
+        for contour in contours:
+            tx, ty = ellipse_detect(frame, contour)
+            if tx != 0.0 and ty != 0.0:
+                ellipses.append([tx, ty])
+
         
-        points = []
-        llpython = []
-        largestContour = [[]]
-        
-        contours = sorted(contours, key=cv2.contourArea)
-        contours.reverse()
-
-        for i in range(len(contours)):
-            if cv2.contourArea(contours[i]) < 4: continue
-            for coord in contours[i]:
-                points.append(coord[0])
-            break
-
-        x = []
-        y = []
-        for point in points:
-            x.append(point[0])
-            y.append(point[1])
-        e = fit_ellipse(np.array(x), np.array(y))
-        params = cart_to_pol(e)
-        
-        if params is None:      return np.array([[]]), frame, [0, 0, 0, 0, 0]
-
-        #
-        if (params[4] > 0.6):
-            return np.array([[]]), frame, [0, 0, 0, 0, 0]
-
-        x, y = get_ellipse_pts(params)
-        for i in range(len(x)):
-            draw_point_2(frame, x[i], y[i])
-        max = 9999
-        for i in range(len(y)):
-            if y[i] < max: max = y[i]
-
-        draw_point(frame, int(params[0]), int(params[1] - params[3]))
-
-        tx, ty = px_to_deg(params[0], abs(max))
-
-        # initialize an array of values to send back to the robot
-        llpython = [1, tx, ty, 0, 0]
-        
-        # draw the bounding circle
-        height, width = frame.shape[:2]
-        
-        return np.array(largestContour), frame, llpython
+        return frame, ellipses
     except:
-        return np.array([[]]), frame, [0, 0, 0, 0, 0]
+        return frame, []
     
 if __name__ == "__main__":
-    # run through camera
     cap = cv2.VideoCapture(0)
     while True:
         ret, img = cap.read()
         if not ret:
             break
         
-        # add gausian blur
         img = cv2.GaussianBlur(img, (101, 101), 0)
         
+        processed_img, ellipses = runPipeline(img)
         
-        # run the pipeline
-        _, processed_img, _ = runPipeline(img)
-        
-        # display the output
         cv2.imshow("output", processed_img)
         
-        # break the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
