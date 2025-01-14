@@ -39,32 +39,41 @@ def process_template(index, img, templates):
     )
     return max_val, max_loc_centered, index
     
+#cone yellows
+upper_yellow = np.array([80, 255, 255], dtype = np.uint8)
+
+lower_yellow = np.array([10, 100, 60], dtype = np.uint8)
+
+#find algae teals
+upper_teal = np.array([200, 255, 120], dtype = np.uint8)
+
+lower_teal = np.array([90, 140, 30], dtype = np.uint8)
 
 def check_hsv(region):
 
     if len(region.shape) == 2:
         region = cv2.cvtColor(region, cv2.COLOR_GRAY2BGR)
     
-    upper_yellow = np.array([40, 255, 255], dtype = np.uint8)
+    upper_teal = np.array([200, 255, 120], dtype = np.uint8)
 
-    lower_yellow = np.array([0, 40, 60], dtype = np.uint8)
+    lower_teal = np.array([90, 140, 30], dtype = np.uint8)
 
 
     hsvRegion = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 
-    mask = cv2.inRange(hsvRegion, lower_yellow, upper_yellow)
+    mask = cv2.inRange(hsvRegion, lower_teal, upper_teal)
 
 
-    yellow_pixels = cv2.countNonZero(mask)
+    selected_pixels = cv2.countNonZero(mask)
     total_pixels = region.shape[0] * region.shape[1]
-    percentage = (yellow_pixels/total_pixels)*100
-    cv2.imshow("r", mask)
-    cv2.imshow("region", region)
+    percentage = (selected_pixels/total_pixels)*100
+    #cv2.imshow("r", mask)
+    #cv2.imshow("region", region)
 
     return percentage >= 5
 
 def main(original_img):
-    global lower_yellow, upper_yellow
+    global lower_teal, upper_teal
 
     templates = load_templates("template", 3)
 
@@ -134,6 +143,9 @@ if __name__ == "__main__":
     #         cv2.imwrite(f"testoutput/{imgnm}", res)
 
     camera = cv2.VideoCapture(0)
+    width  = camera.get(3)  
+    height = camera.get(4)
+    print(width, height)
 
     while True:
         ret, frame = camera.read()

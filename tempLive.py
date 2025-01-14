@@ -4,7 +4,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
-##USES LIVE CAMERA FOOTAGE TO DETECT NOTES ONLY
+##USES LIVE CAMERA FOOTAGE TO DETECT 
 
 def rotate_image(image, angle):
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -32,7 +32,6 @@ def process_template(template, img, threshold=0.55):
 def main(original_img):
     templates = load_templates("template", 3)
     
-
     original_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
     original_img = cv2.resize(original_img, (400, 300))
 
@@ -68,7 +67,6 @@ def main(original_img):
         cv2.circle(best_rotated_img, max_loc_, 5, (0, 0, 255), 2)
 
     cv2.imshow("Result", best_rotated_img)
-    
 
     return best_rotated_img
 
@@ -80,7 +78,7 @@ if __name__ == "__main__":
     #         cv2.imwrite(f"testoutput/{imgnm}", res)
 
     camera = cv2.VideoCapture(0)
-
+    
     while True:
         ret, frame = camera.read()
 

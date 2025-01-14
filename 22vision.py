@@ -113,6 +113,8 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     y = y0 + ap * np.cos(t) * np.sin(phi) + bp * np.sin(t) * np.cos(phi)
     return x, y
 
+# def 
+
 # convert from pixels to angles
 # screen width (px) = 320
 # screen height (px) = 240
@@ -136,21 +138,26 @@ def runPipeline(frame):
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         upper =  np.array([90, 200, 255], dtype = np.uint8)
         lower = np.array([75, 75, 0], dtype = np.uint8)
+
         img_threshold = cv2.inRange(img_hsv, lower, upper)
         
-        cv2.imwrite("mask.jpg", img_threshold)
+        cv2.imshow("mask.jpg", img_threshold)
 
         # find contours in the new binary image
         contours, _ = cv2.findContours(img_threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
+        
         points = []
         llpython = []
         largestContour = [[]]
+        
+        contours = sorted(contours, key=cv2.contourArea)
+        contours.reverse()
 
         for i in range(len(contours)):
             if cv2.contourArea(contours[i]) < 4: continue
             for coord in contours[i]:
                 points.append(coord[0])
+            break
 
         x = []
         y = []
@@ -159,7 +166,13 @@ def runPipeline(frame):
             y.append(point[1])
         e = fit_ellipse(np.array(x), np.array(y))
         params = cart_to_pol(e)
-        if params is None: return
+        
+        if params is None:      return np.array([[]]), frame, [0, 0, 0, 0, 0]
+
+        #
+        if (params[4] > 0.6):
+            return np.array([[]]), frame, [0, 0, 0, 0, 0]
+
         x, y = get_ellipse_pts(params)
         for i in range(len(x)):
             draw_point_2(frame, x[i], y[i])
@@ -173,10 +186,10 @@ def runPipeline(frame):
 
         # initialize an array of values to send back to the robot
         llpython = [1, tx, ty, 0, 0]
-        cv2.imwrite("hi.jpg", frame)
         
         # draw the bounding circle
-                
+        height, width = frame.shape[:2]
+        
         return np.array(largestContour), frame, llpython
     except:
         return np.array([[]]), frame, [0, 0, 0, 0, 0]

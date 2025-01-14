@@ -12,15 +12,14 @@ def px_to_deg(cx, cy):
     ty = ((cy - 120.0) / 240.0) * 49.7
     return tx, -ty
 
-
-
 def draw_point(image, x, y):
     cv2.circle(image, (int(x), int(y)), 5, (255, 0, 0), cv2.FILLED)
 
 def runPipeline(frame):
     img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    upper = np.array([90, 200, 255], dtype=np.uint8)
-    lower = np.array([75, 75, 30], dtype=np.uint8)
+    upper = np.array([85, 200, 255], dtype=np.uint8)
+    lower = np.array([75, 80, 20], dtype=np.uint8)
+    
     img_threshold = cv2.inRange(img_hsv, lower, upper)
 
     cv2.imwrite("mask.jpg", img_threshold)
@@ -52,19 +51,30 @@ def runPipeline(frame):
     return img_threshold, frame
 
 if __name__ == "__main__":
-    startTime = time.perf_counter()
+    cap = cv2.VideoCapture(0)
+    while True:
+        
+        ret, img = cap.read()
+        if not ret:
+            break
 
-    img = cv2.imread("./testimgs/4.jpg")
+        startTime = time.perf_counter()
 
-    # maybe remove this
-    img = cv2.GaussianBlur(img, (101, 101), 0)
+        # add gausian blur
+        img = cv2.blur(img, (51, 51), 0)
+        
+        # run the pipeline
+        _, processed_img, = runPipeline(img)
+        
+        endTime = time.perf_counter()
+        print(f"Processing time: {endTime - startTime} seconds")
 
-    threshold_img, processed_img = runPipeline(img)
-
-    endTime = time.perf_counter()
-    print(f"Processing time: {endTime - startTime} seconds")
-
-    cv2.imshow("Threshold", threshold_img)
-    cv2.imshow("Processed", processed_img)
-    cv2.waitKey(0)
+        # display the output
+        cv2.imshow("output", processed_img)
+        
+        # break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
+    cap.release()
     cv2.destroyAllWindows()

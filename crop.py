@@ -1,6 +1,6 @@
 import cv2
 
-img = cv2.imread("testimgs/coneImages/15.jpg")
+img = cv2.imread("testimgs/4.jpg")
 
 rect = cv2.selectROI(img)
 
