@@ -12,8 +12,6 @@ def px_to_deg(cx, cy):
     ty = ((cy - 120.0) / 240.0) * 49.7
     return tx, -ty
 
-
-
 def draw_point(image, x, y):
     cv2.circle(image, (int(x), int(y)), 5, (255, 0, 0), cv2.FILLED)
 
