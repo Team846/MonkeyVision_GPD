@@ -185,6 +185,9 @@ def runPipeline(frame):
     
         ellipses = []
 
+        img_threshold_3c = cv2.cvtColor(img_threshold, cv2.COLOR_GRAY2BGR)
+        frame = cv2.addWeighted(frame, 0.6, img_threshold_3c, 0.4, 0)
+
         for contour in contours:
             tx, ty = ellipse_detect(frame, img_threshold, contour)
             if ty > 0.0: # Check that circle is in bottom half of frame
