@@ -116,10 +116,10 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     return x, y
 
 def draw_point(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 5, (0, 0, 255), cv2.FILLED)
+    cv2.circle(image, (int(x), int(y)), 3, (0, 0, 255))
 
 def draw_point_2(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), cv2.FILLED)
+    cv2.circle(image, (int(x), int(y)), 5, (0, 0, 255))
 
 def ellipse_detect(frame, img_threshold, contour):
     if cv2.contourArea(contour) < 4: return 0.0, -360.0
@@ -151,7 +151,10 @@ def ellipse_detect(frame, img_threshold, contour):
     area_ellipse = math.pi * params[2] * params[3]
     percentage = number_pixels / area_ellipse
 
-    if percentage < 0.7: # Algae color check
+    if area_ellipse < 1200: # Area check
+        return 0.0, -360.0
+
+    if percentage < 0.8: # Algae color check
         return 0.0, -360.0
 
     x, y = get_ellipse_pts(params)
