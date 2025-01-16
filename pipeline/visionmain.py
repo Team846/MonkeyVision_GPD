@@ -15,7 +15,7 @@ class VisionMain:
         if platform.system() == "Windows" or platform.system() == "Darwin":
             self.cam = CameraReader(0)
         else:
-            self.cam = CameraReader(f"ATCam{pipeline_number}")
+            self.cam = CameraReader(f"GPDCam{pipeline_number}")
 
         self.frame_count = 0
         self.start_time = time.time()
