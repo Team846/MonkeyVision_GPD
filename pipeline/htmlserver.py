@@ -7,8 +7,6 @@ import time
 from threading import Thread
 from util.config import ConfigCategory, Config
 import os
-from camera.preprocess import GET_DIVERGENCE_GAIN, SET_DIVERGENCE_GAIN, GET_TARGET_BRIGHTNESS, SET_TARGET_BRIGHTNESS, GET_NUM_BINS, SET_NUM_BINS, GET_MIN_CORR_STRENGTH, SET_MIN_CORR_STRENGTH
-from localization.detection import GET_THRESH_STEP, SET_THRESH_STEP, GET_THRESH_WIN, SET_THRESH_WIN
 
 class HTMLServer:
     config_category = ConfigCategory("HTMLServer")
@@ -25,7 +23,7 @@ class HTMLServer:
         self.app.layout = html.Div([
             html.Div([
             html.Div([
-                html.H1("MonkeyVision", style={
+                html.H1("MonkeyVision GPD", style={
                 'textAlign': 'left',
                 'color': '#CCC9CA',
                 'font-size': '32px',
@@ -77,119 +75,6 @@ class HTMLServer:
                     'font-weight': 'medium',
                     'padding': '0px 0px 0px 7px',
                 }),
-                html.Label("Dynamic Frame Correction Target", style={
-                    "color": "#CCC9CA",
-                    "font-size": "16px",
-                    "margin-bottom": "10px",
-                    'padding': '15px 20px 0 15px',
-                    "white-space": "nowrap",
-                    "max-width": "250px",
-                }),
-                dcc.Slider(
-                    id="dfc-target-slider",
-                    min=50,
-                    max=200,
-                    step=1,
-                    value=GET_TARGET_BRIGHTNESS(),
-                    marks={50: '50', 200: '200'},
-                    tooltip={"placement": "bottom", "always_visible": True},
-                    className="funky-slider"
-                ),
-                html.Br(),
-                html.Label("ASLC Num Bins", style={
-                    "color": "#CCC9CA",
-                    "font-size": "16px",
-                    "margin-bottom": "10px",
-                    'padding': '15px 20px 0 15px',
-                    "white-space": "nowrap",
-                    "max-width": "250px",
-                }),
-                dcc.Slider(
-                    id="aslc-num-bins-slider",
-                    min=100,
-                    max=1600,
-                    step=100,
-                    value=GET_NUM_BINS(),
-                    marks={50: '50', 1600: '1600'},
-                    tooltip={"placement": "bottom", "always_visible": True},
-                    className="funky-slider"
-                ),
-                html.Br(),
-                html.Label("Min ASLC Correction", style={
-                    "color": "#CCC9CA",
-                    "font-size": "16px",
-                    "margin-bottom": "10px",
-                    'padding': '15px 20px 0 15px',
-                    "white-space": "nowrap",
-                    "max-width": "250px",
-                }),
-                dcc.Slider(
-                    id="aslc-min-corr-slider",
-                    min=0.02,
-                    max=0.5,
-                    step=0.01,
-                    value=GET_MIN_CORR_STRENGTH(),
-                    marks={0.02: '0.02', 0.5: '0.5'},
-                    tooltip={"placement": "bottom", "always_visible": True},
-                    className="funky-slider"
-                ),
-                html.Br(),
-                html.Label("Divergence Gain", style={
-                    "color": "#CCC9CA",
-                    "font-size": "16px",
-                    "margin-bottom": "10px",
-                    'padding': '15px 20px 0 15px',
-                    "white-space": "nowrap",
-                    "max-width": "250px",
-                }),
-                dcc.Slider(
-                    id="divergence-gain-slider",
-                    min=0.5,
-                    max=4.0,
-                    step=0.1,
-                    value=GET_DIVERGENCE_GAIN(),
-                    marks={0.5: '0.5', 4.0: '4.0'},
-                    tooltip={"placement": "bottom", "always_visible": True},
-                    className="funky-slider"
-                ),
-                html.Br(),
-                html.Label("Thresholding Steps", style={
-                    "color": "#CCC9CA",
-                    "font-size": "16px",
-                    "margin-bottom": "10px",
-                    'padding': '15px 20px 0 15px',
-                    "white-space": "nowrap",
-                    "max-width": "250px",
-                }),
-                dcc.Slider(
-                    id="thresh-step-slider",
-                    min=11,
-                    max=33,
-                    step=2,
-                    value=GET_THRESH_STEP(),
-                    marks={11: '11', 33: '33'},
-                    tooltip={"placement": "bottom", "always_visible": True},
-                    className="funky-slider"
-                ),
-                html.Br(),
-                html.Label("Maximum threshold window", style={
-                    "color": "#CCC9CA",
-                    "font-size": "16px",
-                    "margin-bottom": "10px",
-                    'padding': '15px 20px 0 15px',
-                    "white-space": "nowrap",
-                    "max-width": "250px",
-                }),
-                dcc.Slider(
-                    id="max-thresh-slider",
-                    min=11,
-                    max=33,
-                    step=2,
-                    value=GET_THRESH_WIN(),
-                    marks={11: '11', 33: '33'},
-                    tooltip={"placement": "bottom", "always_visible": True},
-                    className="funky-slider"
-                ),
                 html.Br(),
                 html.Label("Displayed Frame Quality", style={
                     "color": "#CCC9CA",
@@ -326,36 +211,6 @@ class HTMLServer:
             [Input("framecomp-slider", "value")]
         )(self.framecomp_callback)
 
-        self.app.callback(
-            Output("fake-output-3", "children"),
-            [Input("dfc-target-slider", "value")]
-        )(self.dfc_target_callback)
-
-        self.app.callback(
-            Output("fake-output-4", "children"),
-            [Input("aslc-num-bins-slider", "value")]
-        )(self.aslc_num_bins_callback)
-
-        self.app.callback(
-            Output("fake-output-5", "children"),
-            [Input("aslc-min-corr-slider", "value")]
-        )(self.aslc_min_corr_callback)
-
-        self.app.callback(
-            Output("fake-output-6", "children"),
-            [Input("divergence-gain-slider", "value")]
-        )(self.divergence_gain_callback)
-
-        self.app.callback(
-            Output("fake-output-7", "children"),
-            [Input("thresh-step-slider", "value")]
-        )(self.thresh_step_callback)
-
-        self.app.callback(
-            Output("fake-output-8", "children"),
-            [Input("max-thresh-slider", "value")]
-        )(self.max_thresh_callback)
-
         self.server.add_url_rule('/video_feed', 'video_feed', self.video_feed)
 
         self.start_server_thread()
@@ -482,36 +337,6 @@ class HTMLServer:
         print("Frame compression value updated")
         HTMLServer.framecomp_slider.setFloat(value)
         return f'Slider value is {value}'
-    
-    def dfc_target_callback(self, value):
-        print("Target brightness value updated")
-        SET_TARGET_BRIGHTNESS(value)
-        return f'Slider value is {value}'
-    
-    def aslc_num_bins_callback(self, value):
-        print("ASLC num bins value updated")
-        SET_NUM_BINS(value)
-        return f'Slider value is {value}'
-    
-    def aslc_min_corr_callback(self, value):
-        print("ASLC min correction value updated")
-        SET_MIN_CORR_STRENGTH(value)
-        return f'Slider value is {value}'
-    
-    def divergence_gain_callback(self, value):
-        print("Divergence gain value updated")
-        SET_DIVERGENCE_GAIN(value)
-        return f'Slider value is {value}'
-    
-    def thresh_step_callback(self, value):
-        print("Thresh step value updated")
-        SET_THRESH_STEP(value)
-        return f'Slider value is {value}'
-    
-    def max_thresh_callback(self, value):
-        print("Max thresh win value updated")
-        SET_THRESH_WIN(value)
-        return f'Slider value is {value}'
 
     def index_string(self):
         return """
@@ -520,7 +345,7 @@ class HTMLServer:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>MonkeyVision</title>
+            <title>MonkeyVision GPD</title>
             <style>
                 body {
                     background-color: #161616;

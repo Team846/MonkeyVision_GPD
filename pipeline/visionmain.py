@@ -1,7 +1,7 @@
 from camera.camerareader import CameraReader
 import cv2
 import time
-import localization.detection
+import localization.vision22
 import localization.partial_solution
 import pipeline.ntables
 from time import time_ns
@@ -26,21 +26,18 @@ class VisionMain:
         self.frame: cv2.typing.MatLike = None
         self.detections: List[localization.partial_solution.Detection] = []
         self.ntables : pipeline.ntables.NTables = pipeline.ntables.NTables(pipeline_number)
-        self.frame_num=0
+
         localization.partial_solution.SET_CAM(pipeline_number)
 
     def execute(self):
         while True:
-            self.frame_num+=1
-            self.frame_num%=500
-            self.ntables.updateFrameNum(self.frame_num)
             frame, timestamp = self.cam.get_frame()
 
-            corners, ids = localization.detection.DETECT_TAGS(frame)
+            frame, rawDets = localization.vision22.runPipeline(frame)
 
-            self.frame = localization.detection.ANNOTATE_TAGS(frame, corners, ids)
+            self.frame = frame
 
-            self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(frame, corners, ids)
+            self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(frame, rawDets)
 
             self.processing_latency = (time_ns() - timestamp) / 1e9
 
