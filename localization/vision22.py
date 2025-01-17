@@ -1,34 +1,18 @@
+from util.config import ConfigCategory, Config
 import math
 import time
 import cv2
 import numpy as np
 
-def random(x):
-    pass
+pref_category = ConfigCategory(f"vision22")
 
-def create_sliders():
-    cv2.namedWindow("hsv")
-    cv2.createTrackbar("hLower", "hsv", 75, 180, random)
-    cv2.createTrackbar("sLower", "hsv", 75, 255, random)
-    cv2.createTrackbar("vLower", "hsv", 0, 255, random)
-
-    cv2.createTrackbar("hUpper", "hsv", 90, 180, random)
-    cv2.createTrackbar("sUpper", "hsv", 200, 255, random)
-    cv2.createTrackbar("vUpper", "hsv", 255, 255, random)
-
-def get_hsv_limits():
-    lower_h = cv2.getTrackbarPos("hLower", "hsv")
-    lower_s = cv2.getTrackbarPos("sLower", "hsv")
-    lower_v = cv2.getTrackbarPos("vLower", "hsv")
-
-    upper_h = cv2.getTrackbarPos("hUpper", "hsv")
-    upper_s = cv2.getTrackbarPos("sUpper", "hsv")
-    upper_v = cv2.getTrackbarPos("vUpper", "hsv")
-
-    lower = np.array([lower_h, lower_s, lower_v], dtype=np.uint8)
-    upper = np.array([upper_h, upper_s, upper_v], dtype=np.uint8)
-
-    return lower, upper
+VISION_L_H = pref_category.getIntConfig("VISION_L_H", 0)
+VISION_L_S = pref_category.getIntConfig("VISION_L_S", 0)
+VISION_L_V = pref_category.getIntConfig("VISION_L_V", 0)
+VISION_U_H = pref_category.getIntConfig("VISION_U_H", 0)
+VISION_U_S = pref_category.getIntConfig("VISION_U_S", 0)
+VISION_U_V = pref_category.getIntConfig("VISION_U_V", 0)
+MIN_AREA = pref_category.getIntConfig("MIN_AREA", 0)
 
 def fit_ellipse(x, y):
     """
@@ -149,6 +133,7 @@ def draw_point_2(image, x, y):
     cv2.circle(image, (int(x), int(y)), 5, (0, 0, 255))
 
 def ellipse_detect(frame, img_threshold, contour):
+    global MIN_AREA
     if cv2.contourArea(contour) < 4: return 0.0, -360.0
 
     points = []
@@ -169,7 +154,6 @@ def ellipse_detect(frame, img_threshold, contour):
         return 0.0, -360.0
     
     image2 = np.zeros_like(img_threshold)
-
         
     image2 = cv2.ellipse(image2, (int(params[0]), int(params[1])), (int(params[2]), int(params[3])), 0, 
                             0, 360, (255, 255, 255) , -1)
@@ -178,7 +162,8 @@ def ellipse_detect(frame, img_threshold, contour):
     area_ellipse = math.pi * params[2] * params[3]
     percentage = number_pixels / area_ellipse
 
-    if area_ellipse < 1200: # Area check
+    if area_ellipse < MIN_AREA.valueInt(): # Area check
+        print("MIN_AREA", MIN_AREA.valueInt())
         return 0.0, -360.0
 
     if percentage < 0.8: # Algae color check
@@ -199,10 +184,15 @@ def ellipse_detect(frame, img_threshold, contour):
 
 
 def runPipeline(frame):
+    global VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA
+    
     try:
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        upper =  np.array([90, 200, 255], dtype = np.uint8)
-        lower = np.array([75, 75, 0], dtype = np.uint8)
+        # upper =  np.array([90, 200, 255], dtype = np.uint8)
+        # lower = np.array([75, 75, 0], dtype = np.uint8)
+
+        upper =  np.array([VISION_L_H.valueInt(), VISION_L_S.valueInt(), VISION_L_V.valueInt()], dtype = np.uint8)
+        lower = np.array([VISION_U_H.valueInt(), VISION_U_S.valueInt(), VISION_U_V.valueInt()], dtype = np.uint8)
 
         img_threshold = cv2.inRange(img_hsv, lower, upper)
         img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
@@ -230,7 +220,7 @@ def runPipeline(frame):
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
-    create_sliders()
+    # create_sliders()
 
     ctr = 0
 

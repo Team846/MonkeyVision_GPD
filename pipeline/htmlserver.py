@@ -7,6 +7,7 @@ import time
 from threading import Thread
 from util.config import ConfigCategory, Config
 import os
+from localization.vision22 import VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA
 
 class HTMLServer:
     config_category = ConfigCategory("HTMLServer")
@@ -94,6 +95,139 @@ class HTMLServer:
                     tooltip={"placement": "bottom", "always_visible": True},
                     className="funky-slider"
                 ),
+                html.Br(),
+                html.Label("Lower H Thresh", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="lowerH-slider",
+                    min=0,
+                    max=255,
+                    step=1,
+                    value=VISION_L_H.valueInt(),
+                    marks={1: '1', 255: '255'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Lower S Thresh", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="lowerS-slider",
+                    min=0,
+                    max=255,
+                    step=1,
+                    value=VISION_L_S.valueInt(),
+                    marks={1: '1', 255: '255'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Lower V Thresh", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="lowerV-slider",
+                    min=0,
+                    max=255,
+                    step=1,
+                    value=VISION_L_V.valueInt(),
+                    marks={1: '1', 255: '255'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Upper H Thresh", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="upperH-slider",
+                    min=0,
+                    max=255,
+                    step=1,
+                    value=VISION_U_H.valueInt(),
+                    marks={1: '1', 255: '255'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Upper S Thresh", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="upperS-slider",
+                    min=0,
+                    max=255,
+                    step=1,
+                    value=VISION_U_S.valueInt(),
+                    marks={1: '1', 255: '255'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Upper V Thresh", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="upperV-slider",
+                    min=0,
+                    max=255,
+                    step=1,
+                    value=VISION_U_V.valueInt(),
+                    marks={1: '1', 255: '255'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Min Area", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="minArea-slider",
+                    min=500,
+                    max=10000,
+                    step=1,
+                    value= MIN_AREA.valueInt(),
+                    marks={1: '1', 2000: '2000'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
                 ], style={
                 "flex": "1",
                 "padding": "10px",
@@ -168,6 +302,7 @@ class HTMLServer:
             html.Div(id='fake-output-6', style={'display': 'none'}),
             html.Div(id='fake-output-7', style={'display': 'none'}),
             html.Div(id='fake-output-8', style={'display': 'none'}),
+            html.Div(id='fake-output-9', style={'display': 'none'}),
             ]),
 
             dcc.Interval(
@@ -210,6 +345,41 @@ class HTMLServer:
             Output("fake-output", "children"),
             [Input("framecomp-slider", "value")]
         )(self.framecomp_callback)
+
+        self.app.callback(
+            Output("fake-output-3", "children"),
+            [Input("lowerH-slider", "value")]
+        )(self.lowerH_callback)
+
+        self.app.callback(
+            Output("fake-output-4", "children"),
+            [Input("lowerS-slider", "value")]
+        )(self.lowerS_callback)
+
+        self.app.callback(
+            Output("fake-output-5", "children"),
+            [Input("lowerV-slider", "value")]
+        )(self.lowerV_callback)
+
+        self.app.callback(
+            Output("fake-output-6", "children"),
+            [Input("upperH-slider", "value")]
+        )(self.upperH_callback)
+
+        self.app.callback(
+            Output("fake-output-7", "children"),
+            [Input("upperS-slider", "value")]
+        )(self.upperS_callback)
+
+        self.app.callback(
+            Output("fake-output-8", "children"),
+            [Input("upperV-slider", "value")]
+        )(self.upperV_callback)
+
+        self.app.callback(
+            Output("fake-output-9", "children"),
+            [Input("minArea-slider", "value")]
+        )(self.minArea_callback)
 
         self.server.add_url_rule('/video_feed', 'video_feed', self.video_feed)
 
@@ -338,6 +508,41 @@ class HTMLServer:
         HTMLServer.framecomp_slider.setFloat(value)
         return f'Slider value is {value}'
 
+    def lowerH_callback(self, value):
+        print("Lower H value updated")
+        VISION_L_H.setInt(value)
+        return f'Slider value is {value}'
+    
+    def lowerS_callback(self, value):
+        print("Lower S value updated")
+        VISION_L_S.setInt(value)
+        return f'Slider value is {value}'
+    
+    def lowerV_callback(self, value):
+        print("Lower V value updated")
+        VISION_L_V.setInt(value)
+        return f'Slider value is {value}'
+    
+    def upperH_callback(self, value):
+        print("Upper H value updated")
+        VISION_U_H.setInt(value)
+        return f'Slider value is {value}'
+    
+    def upperS_callback(self, value):
+        print("Upper H value updated")
+        VISION_U_S.setInt(value)
+        return f'Slider value is {value}'
+    
+    def upperV_callback(self, value):
+        print("Upper H value updated")
+        VISION_U_V.setInt(value)
+        return f'Slider value is {value}'
+    
+    def minArea_callback(self, value):
+        print("Min Area value updated")
+        MIN_AREA.setInt(value)
+        return f'Slider value is {value}'
+    
     def index_string(self):
         return """
         <!DOCTYPE html>

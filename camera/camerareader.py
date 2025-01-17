@@ -10,7 +10,7 @@ import platform
 logger = Logger("Camera")
 
 class CameraReader:
-    def __init__(self, camera_id: str | int = 0):
+    def __init__(self, camera_id):
         if platform.system() == "Windows" or platform.system() == "Darwin":
             self.cap = cv2.VideoCapture(camera_id)
         else:
