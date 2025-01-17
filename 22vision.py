@@ -237,8 +237,11 @@ def runPipeline(frame):
         percentage = number_pixels/area_ellipse
         print(percentage)
 
+        number_pixels_2 = cv2.countNonZero(img_threshold)
+        percentage_2 = number_pixels/number_pixels_2
+
         perc_thresh = 0.6
-        if (percentage < perc_thresh): 
+        if (percentage < perc_thresh or percentage_2 < perc_thresh): 
             return np.array([[]]), frame, [0, 0, 0, 0, 0]
         # print("HERE")
         ### draw white ellipse on black background, use bitwise AND with mask of original image 
