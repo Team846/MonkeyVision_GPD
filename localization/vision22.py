@@ -3,6 +3,33 @@ import time
 import cv2
 import numpy as np
 
+def random(x):
+    pass
+
+def create_sliders():
+    cv2.namedWindow("hsv")
+    cv2.createTrackbar("hLower", "hsv", 75, 180, random)
+    cv2.createTrackbar("sLower", "hsv", 75, 255, random)
+    cv2.createTrackbar("vLower", "hsv", 0, 255, random)
+
+    cv2.createTrackbar("hUpper", "hsv", 90, 180, random)
+    cv2.createTrackbar("sUpper", "hsv", 200, 255, random)
+    cv2.createTrackbar("vUpper", "hsv", 255, 255, random)
+
+def get_hsv_limits():
+    lower_h = cv2.getTrackbarPos("hLower", "hsv")
+    lower_s = cv2.getTrackbarPos("sLower", "hsv")
+    lower_v = cv2.getTrackbarPos("vLower", "hsv")
+
+    upper_h = cv2.getTrackbarPos("hUpper", "hsv")
+    upper_s = cv2.getTrackbarPos("sUpper", "hsv")
+    upper_v = cv2.getTrackbarPos("vUpper", "hsv")
+
+    lower = np.array([lower_h, lower_s, lower_v], dtype=np.uint8)
+    upper = np.array([upper_h, upper_s, upper_v], dtype=np.uint8)
+
+    return lower, upper
+
 def fit_ellipse(x, y):
     """
     Fit the coefficients a,b,c,d,e,f, representing an ellipse described by
@@ -203,6 +230,7 @@ def runPipeline(frame):
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
+    create_sliders()
 
     ctr = 0
 
