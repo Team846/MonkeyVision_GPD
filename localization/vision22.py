@@ -13,8 +13,8 @@ VISION_U_H = pref_category.getIntConfig("VISION_U_H", 0)
 VISION_U_S = pref_category.getIntConfig("VISION_U_S", 0)
 VISION_U_V = pref_category.getIntConfig("VISION_U_V", 0)
 MIN_AREA = pref_category.getIntConfig("MIN_AREA", 0)
-ECCENTRICITY = pref_category.getIntConfig("ECCENTRICITY", 0)
-PERCENTAGE = pref_category.getIntConfig("PERCENTAGE", 0)
+ECCENTRICITY = pref_category.getFloatConfig("ECCENTRICITY", 0)
+PERCENTAGE = pref_category.getFloatConfig("PERCENTAGE", 0)
 
 
 def fit_ellipse(x, y):
@@ -153,7 +153,7 @@ def ellipse_detect(frame, img_threshold, contour):
     
     if params is None: return 0.0, -360.0
 
-    if (params[4] > ECCENTRICITY): # Eccentricity check
+    if (params[4] > ECCENTRICITY.valueFloat()): # Eccentricity check
         return 0.0, -360.0
     
     image2 = np.zeros_like(img_threshold)
@@ -169,7 +169,7 @@ def ellipse_detect(frame, img_threshold, contour):
         #print("MIN_AREA", MIN_AREA.valueInt())
         return 0.0, -360.0
 
-    if percentage < PERCENTAGE: # Algae color check
+    if percentage < PERCENTAGE.valueInt(): # Algae color check
         return 0.0, -360.0
 
     x, y = get_ellipse_pts(params)

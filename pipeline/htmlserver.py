@@ -242,7 +242,7 @@ class HTMLServer:
                     min=0,
                     max=1,
                     step=0.01,
-                    value= ECCENTRICITY.valueInt(),
+                    value= ECCENTRICITY.valueFloat(),
                     marks={0.00: '0.00', 1: '1.00'},
                     tooltip={"placement": "bottom", "always_visible": True},
                     className="funky-slider"
@@ -258,11 +258,11 @@ class HTMLServer:
                 }),
                 dcc.Slider(
                     id="percentage-slider",
-                    min=0,
-                    max=100,
-                    step=1,
-                    value= PERCENTAGE.valueInt(),
-                    marks={0: '0%', 100: '100%'},
+                    min=0.0,
+                    max=1.0,
+                    step=0.1,
+                    value= PERCENTAGE.valueFloat(),
+                    marks={0.0: '0.0', 1.0: '1.0'},
                     tooltip={"placement": "bottom", "always_visible": True},
                     className="funky-slider"
                 ),
@@ -602,7 +602,7 @@ class HTMLServer:
     
     def percentage_callback(self, value):
         print("Percentage value updated")
-        PERCENTAGE.setInt(value)
+        PERCENTAGE.setFloat(value)
         return f'Slider value is {value}'
     
     def index_string(self):
