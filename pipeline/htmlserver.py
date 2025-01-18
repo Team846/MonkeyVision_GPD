@@ -7,7 +7,7 @@ import time
 from threading import Thread
 from util.config import ConfigCategory, Config
 import os
-from localization.vision22 import VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA
+from localization.vision22 import VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA, ECCENTRICITY, PERCENTAGE
 
 class HTMLServer:
     config_category = ConfigCategory("HTMLServer")
@@ -228,6 +228,44 @@ class HTMLServer:
                     tooltip={"placement": "bottom", "always_visible": True},
                     className="funky-slider"
                 ),
+                html.Br(),
+                html.Label("Eccentricity", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="eccentricity-slider",
+                    min=0,
+                    max=1,
+                    step=0.01,
+                    value= ECCENTRICITY.valueInt(),
+                    marks={0.00: '0.00', 1: '1.00'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
+                html.Br(),
+                html.Label("Percentage", style={
+                    "color": "#CCC9CA",
+                    "font-size": "16px",
+                    "margin-bottom": "10px",
+                    'padding': '15px 20px 0 15px',
+                    "white-space": "nowrap",
+                    "max-width": "250px",
+                }),
+                dcc.Slider(
+                    id="percentage-slider",
+                    min=0,
+                    max=100,
+                    step=1,
+                    value= PERCENTAGE.valueInt(),
+                    marks={0: '0%', 100: '100%'},
+                    tooltip={"placement": "bottom", "always_visible": True},
+                    className="funky-slider"
+                ),
                 ], style={
                 "flex": "1",
                 "padding": "10px",
@@ -303,6 +341,10 @@ class HTMLServer:
             html.Div(id='fake-output-7', style={'display': 'none'}),
             html.Div(id='fake-output-8', style={'display': 'none'}),
             html.Div(id='fake-output-9', style={'display': 'none'}),
+            html.Div(id='fake-output-10', style={'display': 'none'}),
+            html.Div(id='fake-output-11', style={'display': 'none'}),
+
+
             ]),
 
             dcc.Interval(
@@ -380,6 +422,16 @@ class HTMLServer:
             Output("fake-output-9", "children"),
             [Input("minArea-slider", "value")]
         )(self.minArea_callback)
+
+        self.app.callback(
+            Output("fake-output-10", "children"),
+            [Input("eccentricity-slider", "value")]
+        )(self.eccentricity_callback)
+
+        self.app.callback(
+            Output("fake-output-11", "children"),
+            [Input("percentage-slider", "value")]
+        )(self.percentage_callback)
 
         self.server.add_url_rule('/video_feed', 'video_feed', self.video_feed)
 
@@ -541,6 +593,16 @@ class HTMLServer:
     def minArea_callback(self, value):
         print("Min Area value updated")
         MIN_AREA.setInt(value)
+        return f'Slider value is {value}'
+    
+    def eccentricity_callback(self, value):
+        print("Eccentricity value updated")
+        ECCENTRICITY.setFloat(value)
+        return f'Slider value is {value}'
+    
+    def percentage_callback(self, value):
+        print("Percentage value updated")
+        PERCENTAGE.setInt(value)
         return f'Slider value is {value}'
     
     def index_string(self):

@@ -13,6 +13,9 @@ VISION_U_H = pref_category.getIntConfig("VISION_U_H", 0)
 VISION_U_S = pref_category.getIntConfig("VISION_U_S", 0)
 VISION_U_V = pref_category.getIntConfig("VISION_U_V", 0)
 MIN_AREA = pref_category.getIntConfig("MIN_AREA", 0)
+ECCENTRICITY = pref_category.getIntConfig("ECCENTRICITY", 0)
+PERCENTAGE = pref_category.getIntConfig("PERCENTAGE", 0)
+
 
 def fit_ellipse(x, y):
     """
@@ -127,13 +130,13 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     return x, y
 
 def draw_point(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 3, (0, 0, 255))
+    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
 
 def draw_point_2(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 5, (0, 0, 255))
+    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
 
 def ellipse_detect(frame, img_threshold, contour):
-    global MIN_AREA
+    global MIN_AREA, ECCENTRICITY, PERCENTAGE
     if cv2.contourArea(contour) < 4: return 0.0, -360.0
 
     points = []
@@ -150,7 +153,7 @@ def ellipse_detect(frame, img_threshold, contour):
     
     if params is None: return 0.0, -360.0
 
-    if (params[4] > 0.5): # Eccentricity check
+    if (params[4] > ECCENTRICITY): # Eccentricity check
         return 0.0, -360.0
     
     image2 = np.zeros_like(img_threshold)
@@ -163,10 +166,10 @@ def ellipse_detect(frame, img_threshold, contour):
     percentage = number_pixels / area_ellipse
 
     if area_ellipse < MIN_AREA.valueInt(): # Area check
-        print("MIN_AREA", MIN_AREA.valueInt())
+        #print("MIN_AREA", MIN_AREA.valueInt())
         return 0.0, -360.0
 
-    if percentage < 0.8: # Algae color check
+    if percentage < PERCENTAGE: # Algae color check
         return 0.0, -360.0
 
     x, y = get_ellipse_pts(params)
@@ -184,15 +187,15 @@ def ellipse_detect(frame, img_threshold, contour):
 
 
 def runPipeline(frame):
-    global VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA
-    
+    global VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA, ECCENTRICITY, PERCENTAGE
+    frame = cv2.GaussianBlur(frame, (101, 101), 0)
     try:
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # upper =  np.array([90, 200, 255], dtype = np.uint8)
         # lower = np.array([75, 75, 0], dtype = np.uint8)
 
-        upper =  np.array([VISION_L_H.valueInt(), VISION_L_S.valueInt(), VISION_L_V.valueInt()], dtype = np.uint8)
-        lower = np.array([VISION_U_H.valueInt(), VISION_U_S.valueInt(), VISION_U_V.valueInt()], dtype = np.uint8)
+        lower =  np.array([VISION_L_H.valueInt(), VISION_L_S.valueInt(), VISION_L_V.valueInt()], dtype = np.uint8)
+        upper = np.array([VISION_U_H.valueInt(), VISION_U_S.valueInt(), VISION_U_V.valueInt()], dtype = np.uint8)
 
         img_threshold = cv2.inRange(img_hsv, lower, upper)
         img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
