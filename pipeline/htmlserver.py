@@ -276,6 +276,8 @@ class HTMLServer:
                 "flex-grow": "1",
                 "max-width": "35%",
                 "box-sizing": "border-box",
+                "overflow-y": "auto",
+                "height": "100vh",
                 }),
                 html.Div([
                 html.Div([
@@ -362,10 +364,11 @@ class HTMLServer:
             "flex-wrap": "wrap",
             "justify-content": "space-between",
             "align-items": "stretch",
-            "height": "100vh",
+            "height": "100%",
             "width": "100%",
             "padding": "0",
             "margin": "0",
+            "overflow-y": "hidden",
         })
 
         self.app.callback(
