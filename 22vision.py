@@ -183,25 +183,38 @@ def runPipeline(frame):
     
 if __name__ == "__main__":
     # run through camera
-    cap = cv2.VideoCapture(0)
-    while True:
-        ret, img = cap.read()
-        if not ret:
-            break
+    # cap = cv2.VideoCapture(0)
+    # while True:
+    #     ret, img = cap.read()
+    #     if not ret:
+    #         break
         
-        # add gausian blur
-        img = cv2.GaussianBlur(img, (101, 101), 0)
+    #     # add gausian blur
+    #     img = cv2.GaussianBlur(img, (101, 101), 0)
         
         
-        # run the pipeline
-        _, processed_img, _ = runPipeline(img)
+    #     # run the pipeline
+    #     _, processed_img, _ = runPipeline(img)
         
-        # display the output
-        cv2.imshow("output", processed_img)
+    #     # display the output
+    #     cv2.imshow("output", processed_img)
         
-        # break the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    #     # break the loop if 'q' is pressed
+    #     if cv2.waitKey(1) & 0xFF == ord('q'):
+    #         break
     
-    cap.release()
+    #cv2.samples.addSamplesDataSearchPath("ALGAE_IMAGES_AUGMENTATION_RESIZED")
+
+    # img = cv2.imread(cv2.samples.findFile("algae_image_1_0.jpg"))
+    for i in range (0, 1827):
+        try:
+            img = cv2.imread("./ALGAE_IMAGES_AUGMENTED_RESIZED/algae_image_4_" + str(i) + ".jpg")
+            img = cv2.GaussianBlur(img, (51, 51), 0)
+            _, processed_img, _ = runPipeline(img)
+            cv2.imwrite("./testoutput/output4_" + str(i) + ".jpg", processed_img)
+        except TypeError:
+            print(str(i) + " failed")
+
+    
+    #cap.release()
     cv2.destroyAllWindows()
