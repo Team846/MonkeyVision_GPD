@@ -1,5 +1,18 @@
+import math
+import time
 import cv2
 import numpy as np
+
+VISION_L_H = 67
+VISION_L_S = 103
+VISION_L_V = 51
+VISION_U_H = 128
+VISION_U_S = 255
+VISION_U_V = 255
+MIN_AREA = 1000
+ECCENTRICITY = 0.51
+PERCENTAGE = 0.7
+
 
 def fit_ellipse(x, y):
     """
@@ -113,108 +126,141 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     y = y0 + ap * np.cos(t) * np.sin(phi) + bp * np.sin(t) * np.cos(phi)
     return x, y
 
-# convert from pixels to angles
-# screen width (px) = 320
-# screen height (px) = 240
-# screen FOV x (deg) = 59.6
-# screen FOV y (deg) = 49.7
-def px_to_deg(cx, cy):
-    tx = ((cx - 160.0) / 320.0) * 59.6
-    ty = ((cy - 120.0) / 240.0) * 49.7
-    return tx, -ty
-
 def draw_point(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 5, (0,0,255), cv2.FILLED)
+    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
 
 def draw_point_2(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 10, (0,0, 255), cv2.FILLED)
+    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
 
-# runPipeline() is called every frame by Limelight's backend.
-def runPipeline(frame):
-    try:
-        # convert the input frame to the HSV color space
-        img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        upper =  np.array([90, 200, 255], dtype = np.uint8)
-        lower = np.array([75, 75, 0], dtype = np.uint8)
-        img_threshold = cv2.inRange(img_hsv, lower, upper)
-        
-        cv2.imwrite("mask.jpg", img_threshold)
+def ellipse_detect(frame, img_threshold, contour):
+    global MIN_AREA, ECCENTRICITY, PERCENTAGE
+    if cv2.contourArea(contour) < 4: return 0.0, -360.0
 
-        # find contours in the new binary image
-        contours, _ = cv2.findContours(img_threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    points = []
+    for coord in contour:
+        points.append(coord[0])
 
-        points = []
-        llpython = []
-        largestContour = [[]]
-
-        for i in range(len(contours)):
-            if cv2.contourArea(contours[i]) < 4: continue
-            for coord in contours[i]:
-                points.append(coord[0])
-
-        x = []
-        y = []
-        for point in points:
-            x.append(point[0])
-            y.append(point[1])
-        e = fit_ellipse(np.array(x), np.array(y))
-        params = cart_to_pol(e)
-        if params is None: return
-        x, y = get_ellipse_pts(params)
-        for i in range(len(x)):
-            draw_point_2(frame, x[i], y[i])
-        max = 9999
-        for i in range(len(y)):
-            if y[i] < max: max = y[i]
-
-        draw_point(frame, int(params[0]), int(params[1] - params[3]))
-
-        tx, ty = px_to_deg(params[0], abs(max))
-
-        # initialize an array of values to send back to the robot
-        llpython = [1, tx, ty, 0, 0]
-        cv2.imwrite("hi.jpg", frame)
-        
-        # draw the bounding circle
-                
-        return np.array(largestContour), frame, llpython
-    except:
-        return np.array([[]]), frame, [0, 0, 0, 0, 0]
+    x = []
+    y = []
+    for point in points:
+        x.append(point[0])
+        y.append(point[1])
+    e = fit_ellipse(np.array(x), np.array(y))
+    params = cart_to_pol(e)
     
+    if params is None: return 0.0, -360.0
+
+    if (params[4] > ECCENTRICITY): # Eccentricity check
+        return 0.0, -360.0
+    
+    image2 = np.zeros_like(img_threshold)
+        
+    image2 = cv2.ellipse(image2, (int(params[0]), int(params[1])), (int(params[2]), int(params[3])), 0, 
+                            0, 360, (255, 255, 255) , -1)
+    bitwise = cv2.bitwise_and(img_threshold, image2)
+    number_pixels = cv2.countNonZero(bitwise)
+    area_ellipse = math.pi * params[2] * params[3]
+    percentage = number_pixels / area_ellipse
+
+    if area_ellipse < MIN_AREA: # Area check
+        #print("MIN_AREA", MIN_AREA.valueInt())
+        return 0.0, -360.0
+
+    if percentage < PERCENTAGE.valueInt(): # Algae color check
+        return 0.0, -360.0
+
+    x, y = get_ellipse_pts(params)
+    for i in range(len(x)):
+        draw_point_2(frame, x[i], y[i])
+    max = 9999
+    for i in range(len(y)):
+        if y[i] < max: max = y[i]
+
+    draw_point(frame, int(params[0]), int(params[1] - params[3]))
+
+    tx, ty = params[0], abs(max)
+
+    return tx, ty
+
+
+def runPipeline(frame):
+    global VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA, ECCENTRICITY, PERCENTAGE
+    frame = cv2.GaussianBlur(frame, (101, 101), 0)
+    try:
+        img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # upper =  np.array([90, 200, 255], dtype = np.uint8)
+        # lower = np.array([75, 75, 0], dtype = np.uint8)
+
+        lower =  np.array([VISION_L_H, VISION_L_S, VISION_L_V], dtype = np.uint8)
+        upper = np.array([VISION_U_H, VISION_U_S, VISION_U_V], dtype = np.uint8)
+
+        img_threshold = cv2.inRange(img_hsv, lower, upper)
+        img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
+
+        img_threshold[img_threshold > 3] = 255
+
+        cv2.imwrite("THRESHOLD.jpg", img_threshold)
+
+        contours, _ = cv2.findContours(img_threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    
+        ellipses = []
+
+        img_threshold_3c = cv2.cvtColor(img_threshold, cv2.COLOR_GRAY2BGR)
+        # cv2.imwrite("thresholds.jpg", img_threshold_3c)
+        frame = cv2.addWeighted(frame, 0.6, img_threshold_3c, 0.4, 0)
+
+        for contour in contours:
+            tx, ty = ellipse_detect(frame, img_threshold, contour)
+            if ty > 0.0: # Check that circle is in bottom half of frame
+                ellipses.append([tx, ty])
+
+        
+        return frame, ellipses, threshold
+    except:
+        return frame, [], None
+
 if __name__ == "__main__":
-    # run through camera
+
+    for i in range (0, 1701): #1827
+        try:
+            img = cv2.imread("./ALGAE_IMAGES_AUGMENTED_RESIZED/algae_image_1_" + str(i) + ".jpg")
+            img = cv2.GaussianBlur(img, (51, 51), 0)
+            processed_img, ellipses, threshold = runPipeline(img)
+            cv2.imwrite("./testoutput/output1_" + str(i) + ".jpg", processed_img)
+            if threshold is not None:
+                cv2.imshow("./threshold/output1_" + str(i) + ".jpg", threshold)
+                print("HERE")
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        except TypeError:
+            print(str(i) + " failed")
+
     # cap = cv2.VideoCapture(0)
+    # # create_sliders()
+
+    # ctr = 0
+
     # while True:
     #     ret, img = cap.read()
     #     if not ret:
     #         break
+
+    #     t_start = time.time_ns()
         
-    #     # add gausian blur
     #     img = cv2.GaussianBlur(img, (101, 101), 0)
         
-        
-    #     # run the pipeline
-    #     _, processed_img, _ = runPipeline(img)
-        
-    #     # display the output
+    #     processed_img, ellipses = runPipeline(img)
+
+    #     if ctr == 50:
+    #         print("FPS: ", 1e9 / (time.time_ns() - t_start))
+    #         ctr = 0
+    #     ctr += 1
+
     #     cv2.imshow("output", processed_img)
         
-    #     # break the loop if 'q' is pressed
     #     if cv2.waitKey(1) & 0xFF == ord('q'):
     #         break
     
-    #cv2.samples.addSamplesDataSearchPath("ALGAE_IMAGES_AUGMENTATION_RESIZED")
-
-    # img = cv2.imread(cv2.samples.findFile("algae_image_1_0.jpg"))
-    for i in range (0, 1827):
-        try:
-            img = cv2.imread("./ALGAE_IMAGES_AUGMENTED_RESIZED/algae_image_4_" + str(i) + ".jpg")
-            img = cv2.GaussianBlur(img, (51, 51), 0)
-            _, processed_img, _ = runPipeline(img)
-            cv2.imwrite("./testoutput/output4_" + str(i) + ".jpg", processed_img)
-        except TypeError:
-            print(str(i) + " failed")
-
-    
-    #cap.release()
+    # cap.release()
     cv2.destroyAllWindows()
