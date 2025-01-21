@@ -169,7 +169,7 @@ def ellipse_detect(frame, img_threshold, contour):
         #print("MIN_AREA", MIN_AREA.valueInt())
         return 0.0, -360.0
 
-    if percentage < PERCENTAGE.valueInt(): # Algae color check
+    if percentage < PERCENTAGE.valueFloat(): # Algae color check
         return 0.0, -360.0
 
     x, y = get_ellipse_pts(params)
