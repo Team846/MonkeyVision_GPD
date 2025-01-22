@@ -10,9 +10,10 @@ VISION_U_H = 128
 VISION_U_S = 255
 VISION_U_V = 255
 MIN_AREA = 1000
-ECCENTRICITY = 0.51
-PERCENTAGE = 0.7
+ECCENTRICITY = 0.7 #0.51
+PERCENTAGE = 0.7 
 
+##### CHECK FOR RESULTS IN testouput FOLDER!!
 
 def fit_ellipse(x, y):
     """
@@ -127,10 +128,10 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     return x, y
 
 def draw_point(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
+    cv2.circle(image, (int(x), int(y)), 2, (0, 0, 255), 2)
 
 def draw_point_2(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
+    cv2.circle(image, (int(x), int(y)), 2, (0, 0, 255), 2)
 
 def ellipse_detect(frame, img_threshold, contour):
     global MIN_AREA, ECCENTRICITY, PERCENTAGE
@@ -161,12 +162,13 @@ def ellipse_detect(frame, img_threshold, contour):
     number_pixels = cv2.countNonZero(bitwise)
     area_ellipse = math.pi * params[2] * params[3]
     percentage = number_pixels / area_ellipse
+    print("PERCENTAGE ", percentage)
 
     if area_ellipse < MIN_AREA: # Area check
         #print("MIN_AREA", MIN_AREA.valueInt())
         return 0.0, -360.0
 
-    if percentage < PERCENTAGE.valueInt(): # Algae color check
+    if percentage < PERCENTAGE: # Algae color check
         return 0.0, -360.0
 
     x, y = get_ellipse_pts(params)
@@ -185,7 +187,8 @@ def ellipse_detect(frame, img_threshold, contour):
 
 def runPipeline(frame):
     global VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA, ECCENTRICITY, PERCENTAGE
-    frame = cv2.GaussianBlur(frame, (101, 101), 0)
+
+    frame = cv2.GaussianBlur(frame, (51, 51), 0)
     try:
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # upper =  np.array([90, 200, 255], dtype = np.uint8)
@@ -195,11 +198,9 @@ def runPipeline(frame):
         upper = np.array([VISION_U_H, VISION_U_S, VISION_U_V], dtype = np.uint8)
 
         img_threshold = cv2.inRange(img_hsv, lower, upper)
-        img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
+        #img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
 
         img_threshold[img_threshold > 3] = 255
-
-        cv2.imwrite("THRESHOLD.jpg", img_threshold)
 
         contours, _ = cv2.findContours(img_threshold, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     
@@ -207,16 +208,19 @@ def runPipeline(frame):
 
         img_threshold_3c = cv2.cvtColor(img_threshold, cv2.COLOR_GRAY2BGR)
         # cv2.imwrite("thresholds.jpg", img_threshold_3c)
-        frame = cv2.addWeighted(frame, 0.6, img_threshold_3c, 0.4, 0)
+        frame = cv2.addWeighted(frame, 0.6, img_threshold_3c, 0.4, 0) #adds the mask on top of the image
 
         for contour in contours:
             tx, ty = ellipse_detect(frame, img_threshold, contour)
-            if ty > 0.0: # Check that circle is in bottom half of frame
-                ellipses.append([tx, ty])
+            # if ty > 0.0: # Check that circle is in bottom half of frame
+            #     ellipses.append([tx, ty])
+            ellipses.append([tx, ty])
 
         
         return frame, ellipses, threshold
-    except:
+    except Exception as e:
+        print(f"the exception is {type(e).__name__}")
+
         return frame, [], None
 
 if __name__ == "__main__":
@@ -224,11 +228,20 @@ if __name__ == "__main__":
     for i in range (0, 1701): #1827
         try:
             img = cv2.imread("./ALGAE_IMAGES_AUGMENTED_RESIZED/algae_image_1_" + str(i) + ".jpg")
-            img = cv2.GaussianBlur(img, (51, 51), 0)
+            height, width = img.shape[:2]
+            t_start = time.time_ns()
+
+            if (height < width):
+                img = cv2.resize(img, (240, 180))
+            elif (height > width):
+                img = cv2.resize(img, (180, 240))
+
             processed_img, ellipses, threshold = runPipeline(img)
+
+            print("FPS: ", 1e9 / (time.time_ns() - t_start))
             cv2.imwrite("./testoutput/output1_" + str(i) + ".jpg", processed_img)
             if threshold is not None:
-                cv2.imshow("./threshold/output1_" + str(i) + ".jpg", threshold)
+                cv2.imwrite("./threshold/output1_" + str(i) + ".jpg", threshold)
                 print("HERE")
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
