@@ -221,10 +221,10 @@ class HTMLServer:
                 dcc.Slider(
                     id="minArea-slider",
                     min=500,
-                    max=10000,
+                    max=15000,
                     step=1,
                     value= MIN_AREA.valueInt(),
-                    marks={1: '1', 2000: '2000'},
+                    marks={500: '500', 15000: '15000'},
                     tooltip={"placement": "bottom", "always_visible": True},
                     className="funky-slider"
                 ),

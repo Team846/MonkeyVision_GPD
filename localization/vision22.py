@@ -130,10 +130,10 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     return x, y
 
 def draw_point(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
+    cv2.circle(image, (int(x), int(y)), 2, (255, 0, 255), -1)
 
 def draw_point_2(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 10, (0, 0, 255), -1)
+    cv2.circle(image, (int(x), int(y)), 2, (255, 0, 255), -1)
 
 def ellipse_detect(frame, img_threshold, contour):
     global MIN_AREA, ECCENTRICITY, PERCENTAGE
@@ -188,7 +188,8 @@ def ellipse_detect(frame, img_threshold, contour):
 
 def runPipeline(frame):
     global VISION_L_H, VISION_L_S, VISION_L_V, VISION_U_H, VISION_U_S, VISION_U_V, MIN_AREA, ECCENTRICITY, PERCENTAGE
-    frame = cv2.GaussianBlur(frame, (101, 101), 0)
+    ksize = 21
+    frame = cv2.GaussianBlur(frame, (ksize, ksize), 0)
     try:
         img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # upper =  np.array([90, 200, 255], dtype = np.uint8)
@@ -198,9 +199,9 @@ def runPipeline(frame):
         upper = np.array([VISION_U_H.valueInt(), VISION_U_S.valueInt(), VISION_U_V.valueInt()], dtype = np.uint8)
 
         img_threshold = cv2.inRange(img_hsv, lower, upper)
-        img_threshold = cv2.GaussianBlur(img_threshold, (51, 51), 0)
+        img_threshold = cv2.GaussianBlur(img_threshold, (ksize, ksize), 0)
 
-        img_threshold[img_threshold > 3] = 255
+        img_threshold[img_threshold > 10] = 255
 
         # cv2.imshow("threshold.jpg", img_threshold)
 

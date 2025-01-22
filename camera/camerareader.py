@@ -16,9 +16,9 @@ class CameraReader:
         else:
             self.cap = cv2.VideoCapture(f"/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._{camera_id}_{camera_id}-video-index0")
             self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-            self.cap.set(cv2.CAP_PROP_FPS, 120.0)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+            self.cap.set(cv2.CAP_PROP_FPS, 100.0)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 320)
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 240)
 
     def get_frame(self) -> Tuple[MatLike, int]:
         ret, frame = self.cap.read()
