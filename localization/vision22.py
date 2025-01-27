@@ -6,15 +6,15 @@ import numpy as np
 
 pref_category = ConfigCategory(f"vision22")
 
-VISION_L_H = pref_category.getIntConfig("VISION_L_H", 0)
-VISION_L_S = pref_category.getIntConfig("VISION_L_S", 0)
-VISION_L_V = pref_category.getIntConfig("VISION_L_V", 0)
-VISION_U_H = pref_category.getIntConfig("VISION_U_H", 0)
-VISION_U_S = pref_category.getIntConfig("VISION_U_S", 0)
-VISION_U_V = pref_category.getIntConfig("VISION_U_V", 0)
-MIN_AREA = pref_category.getIntConfig("MIN_AREA", 0)
-ECCENTRICITY = pref_category.getFloatConfig("ECCENTRICITY", 0)
-PERCENTAGE = pref_category.getFloatConfig("PERCENTAGE", 0)
+VISION_L_H = pref_category.getIntConfig("VISION_L_H", 79)
+VISION_L_S = pref_category.getIntConfig("VISION_L_S", 103)
+VISION_L_V = pref_category.getIntConfig("VISION_L_V", 51)
+VISION_U_H = pref_category.getIntConfig("VISION_U_H", 101)
+VISION_U_S = pref_category.getIntConfig("VISION_U_S", 255)
+VISION_U_V = pref_category.getIntConfig("VISION_U_V", 255)
+MIN_AREA = pref_category.getIntConfig("MIN_AREA", 934)
+ECCENTRICITY = pref_category.getFloatConfig("ECCENTRICITY", 0.51)
+PERCENTAGE = pref_category.getFloatConfig("PERCENTAGE", 0.7)
 
 
 def fit_ellipse(x, y):
@@ -130,14 +130,14 @@ def get_ellipse_pts(params, npts=50, tmin=0, tmax=2*np.pi):
     return x, y
 
 def draw_point(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 2, (255, 0, 255), -1)
+    cv2.circle(image, (int(x), int(y)), 3, (0, 0, 255), -1)
 
 def draw_point_2(image, x, y):
-    cv2.circle(image, (int(x), int(y)), 2, (255, 0, 255), -1)
+    cv2.circle(image, (int(x), int(y)), 2, (0, 255, 0), -1)
 
 def ellipse_detect(frame, img_threshold, contour):
     global MIN_AREA, ECCENTRICITY, PERCENTAGE
-    if cv2.contourArea(contour) < 4: return 0.0, -360.0
+    if cv2.contourArea(contour) < 4: return 0.0, -360.0, 0.0
 
     points = []
     for coord in contour:
@@ -151,10 +151,10 @@ def ellipse_detect(frame, img_threshold, contour):
     e = fit_ellipse(np.array(x), np.array(y))
     params = cart_to_pol(e)
     
-    if params is None: return 0.0, -360.0
+    if params is None: return 0.0, -360.0, 0.0
 
     if (params[4] > ECCENTRICITY.valueFloat()): # Eccentricity check
-        return 0.0, -360.0
+        return 0.0, -360.0, 0.0
     
     image2 = np.zeros_like(img_threshold)
         
@@ -167,23 +167,23 @@ def ellipse_detect(frame, img_threshold, contour):
 
     if area_ellipse < MIN_AREA.valueInt(): # Area check
         #print("MIN_AREA", MIN_AREA.valueInt())
-        return 0.0, -360.0
+        return 0.0, -360.0, 0.0
 
     if percentage < PERCENTAGE.valueFloat(): # Algae color check
-        return 0.0, -360.0
+        return 0.0, -360.0, 0.0
 
     x, y = get_ellipse_pts(params)
+
+    tx, ty = params[0], params[1]
+
+    if ty - frame.shape[0] > 0.0: # Check to see if algae is in lower half of frame
+        return 0.0, -360.0, 0.0
+    
+    draw_point(frame, int(params[0]), int(params[1]))
     for i in range(len(x)):
         draw_point_2(frame, x[i], y[i])
-    max = 9999
-    for i in range(len(y)):
-        if y[i] < max: max = y[i]
 
-    draw_point(frame, int(params[0]), int(params[1] - params[3]))
-
-    tx, ty = params[0], abs(max)
-
-    return tx, ty
+    return tx, ty, params[2]
 
 
 def runPipeline(frame):
@@ -213,9 +213,9 @@ def runPipeline(frame):
         frame = cv2.addWeighted(frame, 0.6, img_threshold_3c, 0.4, 0)
 
         for contour in contours:
-            tx, ty = ellipse_detect(frame, img_threshold, contour)
-            if ty > 0.0: # Check that circle is in bottom half of frame
-                ellipses.append([tx, ty])
+            tx, ty, rx = ellipse_detect(frame, img_threshold, contour)
+            if ty > 0.0: # Check that circle is valid
+                ellipses.append([tx, ty, rx])
 
         
         return frame, ellipses
