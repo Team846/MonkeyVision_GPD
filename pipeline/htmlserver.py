@@ -542,8 +542,12 @@ class HTMLServer:
                     }),
                     html.Span(f"θ {detection.theta:.2f}deg", style={
                         'color': '#CCC9CA',
-                        'margin-right': '10px'
-                    })
+                        'margin-right': '15px'
+                    }),
+                    html.Span(f"On: {detection.isOnTop()}", style={
+                        'color': '#CCC9CA',
+                        'margin-right': '5px'
+                    }),
                 ], style={
                     'border': '2px solid rgba(255, 255, 255, 0.5)',
                     'border-radius': '10px',
