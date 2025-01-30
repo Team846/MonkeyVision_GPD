@@ -3,11 +3,12 @@ from util.logger import Logger
 from cv2.typing import MatLike
 from typing import List, Tuple
 import math
-from interpol import InterpolationTables
+from localization.interpol import Interpol
 
 logger = Logger("PartialSolution")
 
-IS_TUNING = False
+IS_TUNING_PURE = False
+IS_TUNING_ANGULAR = False
 
 CAM_FOV_X = 0
 CAM_FOV_Y = 0
@@ -23,7 +24,7 @@ def SET_CAM(pipeline: int):
     CAM_FOV_Y = pref_category.getFloatConfig("CAM_FOV_Y_deg", 55.42)
     CAM_ANGLE_H = pref_category.getFloatConfig("CAM_MOUNT_AH_deg", 0.0)
     CAM_ANGLE_V = pref_category.getFloatConfig("CAM_MOUNT_AV_deg", 0.0)
-    ONT_THRESH = pref_category.getFloatConfig("ONT_THRESH", 9.0)
+    ONT_THRESH = pref_category.getFloatConfig("ONT_THRESH", 14.0)
 
 
 class Detection:
@@ -67,7 +68,7 @@ def vertical_angle(y_pos: float, frame: MatLike) -> float:
 def CALCULATE_PARTIAL_SOLUTION(
     image: MatLike, objs: List[Tuple[float, float]]
 ) -> List[Detection]:
-    global CAM_FOV_X, CAM_ANGLE_H
+    global ONT_THRESH
 
     result = []
 
@@ -79,9 +80,11 @@ def CALCULATE_PARTIAL_SOLUTION(
         r_h = math.radians(horizontal_angle(obj[0] + obj[2], image))
 
         r_ground: float = 1.0 / (math.tan(r_h) - math.tan(l_h))
-        if not IS_TUNING:
-            r_ground = InterpolationTables.interpolate(r_ground)
+        if not IS_TUNING_PURE:
+            r_ground = Interpol.PureDistTable.interpolate(r_ground)
             r_ground = r_ground / math.cos(math.radians(theta_h))
+        if not IS_TUNING_ANGULAR:
+            r_ground *= Interpol.AngularDistTable.interpolate(abs(theta_h))
 
         height: float = r_ground * math.tan(math.radians(theta_v))
 

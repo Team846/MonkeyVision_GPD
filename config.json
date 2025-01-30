@@ -16,6 +16,6 @@
     "CAM_FOV_Y_deg": { "value": "55.42", "type": 2 },
     "CAM_MOUNT_AH_deg": { "value": "0.0", "type": 2 },
     "CAM_MOUNT_AV_deg": { "value": "0.0", "type": 2 },
-    "ONT_THRESH": { "value": "9.0", "type": 2 }
+    "ONT_THRESH": { "value": "14.0", "type": 2 }
   }
 }
