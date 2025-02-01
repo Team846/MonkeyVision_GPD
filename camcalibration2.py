@@ -8,8 +8,8 @@ import json
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-objp = np.zeros((7*10,3), np.float32)
-objp[:,:2] = np.mgrid[0:10,0:7].T.reshape(-1,2)
+objp = np.zeros((8*11,3), np.float32)
+objp[:,:2] = np.mgrid[0:11,0:8].T.reshape(-1,2)
 
 # Arrays to store object points and image points from all the images.
 objpoints = [] # 3d point in real world space
@@ -26,7 +26,7 @@ while True:
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # cv.imwrite('img.jpg', img)
     # Find the chess board corners
-    ret, corners =  cv.findChessboardCorners(gray, (7,10), None)
+    ret, corners =  cv.findChessboardCorners(gray, (8,11), None)
 
     # If found, add object points, image points (after refining them)
     if ret == True:
@@ -35,8 +35,9 @@ while True:
         corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
         imgpoints.append(corners2)
 
-        cv.drawChessboardCorners(img, (7,10), corners2, ret)
+        cv.drawChessboardCorners(img, (8,11), corners2, ret)
+        cv.imwrite('./calibration/img.jpg', img)
         break
 
-    cv.imwrite('./calibration/img8.jpg', img)
+    cv.imwrite('./calibration/img.jpg', img)
     cv.destroyAllWindows()
