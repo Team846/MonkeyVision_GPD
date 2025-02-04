@@ -21,7 +21,7 @@ avg_dist_coeffs = np.mean(dist_coeffs, axis=0)
 print("Averaged Camera Matrix:\n", avg_camera_matrix)
 print("Averaged Distortion Coefficients:\n", avg_dist_coeffs)
 
-img = cv2.imread('img.jpg')
+img = cv2.imread('calibration_results/img_without_lines1.jpg')
 if img is None:
     raise IOError("Image not found. Please check the file path.")
 
