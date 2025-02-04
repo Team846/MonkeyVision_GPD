@@ -14,14 +14,16 @@ for calib in data:
     
     camera_matrices.append(cam_mat)
     dist_coeffs.append(dist_coef)
-    
+
+
 avg_camera_matrix = np.mean(camera_matrices, axis=0)
+print("mtxs:", camera_matrices)
 avg_dist_coeffs = np.mean(dist_coeffs, axis=0)
 
 print("Averaged Camera Matrix:\n", avg_camera_matrix)
 print("Averaged Distortion Coefficients:\n", avg_dist_coeffs)
 
-img = cv2.imread('calibration_results/img_without_lines1.jpg')
+img = cv2.imread('calibration_results/img_without_lines5.jpg')
 if img is None:
     raise IOError("Image not found. Please check the file path.")
 

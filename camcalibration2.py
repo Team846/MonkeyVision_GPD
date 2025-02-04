@@ -45,44 +45,20 @@ while True:
         cv.imwrite('./calibration/img.jpg', img)
         cv.imwrite(f'calibration_results/img_without_lines{file_num}.jpg', img_without_lines)
 
-        break
+        # break
 
     cv.imwrite('./calibration/img.jpg', img)
     cv.destroyAllWindows()
 
-
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-img = cv.imread('calib_imgs/chessboard1.png')
+img = cv.imread('calibration_results/img_without_lines3.jpg')
 h,  w = img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+
 # undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 
-# undistort
-mapx, mapy = cv.initUndistortRectifyMap(mtx, dist, None, newcameramtx, (w,h), 5)
-dst = cv.remap(img, mapx, mapy, cv.INTER_LINEAR)
-
+# crop the image
+x, y, w, h = roi
+dst = dst[y:y+h, x:x+w]
 cv.imwrite('calibresult.png', dst)
-print(f'DIST: {dist}, MTX: {mtx}')
-
-dist,mtx = np.array(dist), np.array(mtx)
-data_entry = {"dist": dist.tolist(), "mtx": mtx.tolist()}
-json_file = 'matrix.json'
-
-if os.path.exists(json_file):
-    with open(json_file, "r") as f:
-        try:
-            data = json.load(f)
-            if not isinstance(data, list):  # Ensure it's a list
-                data = []
-        except json.JSONDecodeError:
-            data = []
-else:
-    data = []
-
-# Append new entry
-data.append(data_entry)
-
-# Write back to JSON file
-with open(json_file, "w") as f:
-    json.dump(data, f, indent=4)
