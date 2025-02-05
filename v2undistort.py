@@ -1,11 +1,22 @@
 import numpy as np
 
 import cv2
-   
-camera_matrices = np.array([[922.21332721,   0.0,         682.2337992 ],
- [  0.0,         920.19486032, 366.35006633],
- [  0.0,           0.0,           1.0        ]])
-dist_coeffs = np.array([[ 0.03312957, -0.00165267,  0.00165053, -0.00130589, -0.11381045]])
+
+
+# camera 01: algae camera
+# camera_matrices = np.array([[920.1598769,    0.,         685.36092797],
+#  [  0.,         916.3391272,  368.03760649],
+#  [  0.,           0.,           1.        ]])
+# dist_coeffs = np.array([[ 0.01841649,  0.05107274,  0.00252806, -0.00028218, -0.12029582]])
+
+#camera 02: yellow camera
+camera_matrices = np.array([[913.7377659,    0.,         673.42504633],
+ [  0.,         909.01346161, 464.51229778],
+ [  0.,           0.,           1.        ]])
+dist_coeffs = np.array([[ 0.03171734, -0.01147495, -0.00010437, -0.00082573, -0.059311  ]])
+
+#camera 03: 
+
 
 # avg_camera_matrix = np.mean(camera_matrices, axis=0)
 # print("mtxs:", camera_matrices)

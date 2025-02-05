@@ -5,6 +5,8 @@ import numpy as np
 import os
 import glob
 import json
+
+#TAKES IN THE IMAGES AND GETS CAMERA MATRIX TO USE IN UNDISTORT
  
 # Defining the dimensions of checkerboard
 CHECKERBOARD = (6,9)
@@ -22,7 +24,7 @@ objp[0,:,:2] = np.mgrid[0:CHECKERBOARD[0], 0:CHECKERBOARD[1]].T.reshape(-1, 2)
 prev_img_shape = None
  
 # Extracting path of individual image stored in a given directory
-images = glob.glob('./calibration_testimgs/*.jpg')
+images = glob.glob('./focusedcalibration_results/*.jpg')
 for fname in images:
     img = cv2.imread(fname)
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)

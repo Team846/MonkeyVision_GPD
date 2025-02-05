@@ -30,8 +30,8 @@ while True:
 
     # If found, add object points, image points (after refining them)
     file_num = 9
-    directory = 'calibration_results'
-    file_to_check = f'calibration_results/img_without_calib{file_num}.jpg'
+    directory = 'focusedcalibration_results'
+    # file_to_check = f'focusedcalibration_results/img_without_calib{file_num}.jpg'
     if ret == True:
         objpoints.append(objp)
         img_without_lines = img.copy()
@@ -42,23 +42,23 @@ while True:
         #print(imgpoints)
 
         cv.drawChessboardCorners(img, (6,9), corners2, ret)
-        cv.imwrite('./calibration/img.jpg', img)
-        cv.imwrite(f'calibration_results/img_without_lines{file_num}.jpg', img_without_lines)
+        # cv.imwrite('./calibration/img.jpg', img)
+        cv.imwrite(f'focusedcalibration_results/img_without_lines{file_num}.jpg', img_without_lines)
 
-        # break
+        break
 
     cv.imwrite('./calibration/img.jpg', img)
     cv.destroyAllWindows()
 
-ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-img = cv.imread('calibration_results/img_without_lines3.jpg')
-h,  w = img.shape[:2]
-newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+# ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+# img = cv.imread('focusedcalibration_results/img_without_lines3.jpg')
+# h,  w = img.shape[:2]
+# newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 
-# undistort
-dst = cv.undistort(img, mtx, dist, None, newcameramtx)
+# # undistort
+# dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 
-# crop the image
-x, y, w, h = roi
-dst = dst[y:y+h, x:x+w]
-cv.imwrite('calibresult.png', dst)
+# # crop the image
+# x, y, w, h = roi
+# dst = dst[y:y+h, x:x+w]
+# cv.imwrite('calibresult.png', dst)
