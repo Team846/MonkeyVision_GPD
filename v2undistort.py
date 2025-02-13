@@ -10,13 +10,17 @@ import cv2
 # dist_coeffs = np.array([[ 0.01841649,  0.05107274,  0.00252806, -0.00028218, -0.12029582]])
 
 #camera 02: yellow camera
-camera_matrices = np.array([[913.7377659,    0.,         673.42504633],
- [  0.,         909.01346161, 464.51229778],
+# camera_matrices = np.array([[913.7377659,    0.,         673.42504633],
+#  [  0.,         909.01346161, 464.51229778],
+#  [  0.,           0.,           1.        ]])
+# dist_coeffs = np.array([[ 0.03171734, -0.01147495, -0.00010437, -0.00082573, -0.059311  ]])
+
+#camera 03: other yellow camera
+
+camera_matrices = np.array([[908.83872723,   0.,         649.81160084],
+ [  0.,         909.08136887, 380.7938072 ],
  [  0.,           0.,           1.        ]])
-dist_coeffs = np.array([[ 0.03171734, -0.01147495, -0.00010437, -0.00082573, -0.059311  ]])
-
-#camera 03: 
-
+dist_coeffs = np.array([[ 0.02118784,  0.03526092, -0.00257518,  0.00310157, -0.12757416]])
 
 # avg_camera_matrix = np.mean(camera_matrices, axis=0)
 # print("mtxs:", camera_matrices)
