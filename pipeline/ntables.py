@@ -10,12 +10,15 @@ class NTables:
         angles: List[float] = []
         distances: List[float] = []
         tops: List[bool] = []
+        heights: List[float] = []
         for detection in detections:
             angles.append(detection.getTheta())
             distances.append(detection.getR())
             tops.append(detection.isOnTop())
+            heights.append(detection.height)
         self.table.putNumberArray("tx", angles)
         self.table.putNumberArray("distances", distances)
         self.table.putBooleanArray("on_tops", tops)
         self.table.putNumber("tl", latency)
+        self.table.putNumberArray("heights", heights)
 
