@@ -17,10 +17,10 @@ import cv2
 
 #camera 03: other yellow camera
 
-camera_matrices = np.array([[908.83872723,   0.,         649.81160084],
- [  0.,         909.08136887, 380.7938072 ],
- [  0.,           0.,           1.        ]])
-dist_coeffs = np.array([[ 0.02118784,  0.03526092, -0.00257518,  0.00310157, -0.12757416]])
+# camera_matrices = np.array([[908.83872723,   0.,         649.81160084],
+#  [  0.,         909.08136887, 380.7938072 ],
+#  [  0.,           0.,           1.        ]])
+# dist_coeffs = np.array([[ 0.02118784,  0.03526092, -0.00257518,  0.00310157, -0.12757416]])
 
 # avg_camera_matrix = np.mean(camera_matrices, axis=0)
 # print("mtxs:", camera_matrices)
@@ -29,10 +29,15 @@ dist_coeffs = np.array([[ 0.02118784,  0.03526092, -0.00257518,  0.00310157, -0.
 # print("Averaged Camera Matrix:\n", avg_camera_matrix)
 # print("Averaged Distortion Coefficients:\n", avg_dist_coeffs)
 
+camera_matrices = np.array([[544.31034298,   0.,         350.32781714],
+ [  0.,         545.39265395, 217.29877639],
+ [  0.,           0.,           1.        ]])
+
+dist_coeffs = np.array([[ 0.00384938,  0.04594284,  0.0030906,   0.00018328, -0.11611184]])
 
 # import the camera matrix and distortion coefficients
-camera_matrices = np.load('camera_matrix.npy')
-dist_coeffs = np.load('dist_coeff.npy')
+# camera_matrices = np.load('camera_matrix.npy')
+# dist_coeffs = np.load('dist_coeff.npy')
 
 cam = cv2.VideoCapture(0)
 
