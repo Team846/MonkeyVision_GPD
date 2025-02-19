@@ -29,6 +29,11 @@ dist_coeffs = np.array([[ 0.02118784,  0.03526092, -0.00257518,  0.00310157, -0.
 # print("Averaged Camera Matrix:\n", avg_camera_matrix)
 # print("Averaged Distortion Coefficients:\n", avg_dist_coeffs)
 
+
+# import the camera matrix and distortion coefficients
+camera_matrices = np.load('camera_matrix.npy')
+dist_coeffs = np.load('dist_coeff.npy')
+
 cam = cv2.VideoCapture(0)
 
 while True:
@@ -39,7 +44,12 @@ while True:
 
     h, w = img.shape[:2]
 
+    CAM_APT_X = 8.7586
+
     new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrices, dist_coeffs, (w, h), 1, (w, h))
+
+    cam_fov_x, cam_fov_y, _, _, _ = cv2.calibrationMatrixValues(camera_matrices, (w, h), CAM_APT_X, CAM_APT_X)
+    print(cam_fov_x, cam_fov_y)
 
     undistorted_img = cv2.undistort(img, camera_matrices, dist_coeffs, None, new_camera_matrix)
     cv2.imwrite('v2undistorted.jpg', undistorted_img)

@@ -9,7 +9,7 @@ import json
 #TAKES IN THE IMAGES AND GETS CAMERA MATRIX TO USE IN UNDISTORT
  
 # Defining the dimensions of checkerboard
-CHECKERBOARD = (6,9)
+CHECKERBOARD = (7,10)
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
  
 # Creating vector to store vectors of 3D points for each checkerboard image
@@ -61,6 +61,10 @@ and corresponding pixel coordinates of the
 detected corners (imgpoints)
 """
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+# store the camera matrix and distortion coefficients in a .npy file
+np.save('camera_matrix.npy', mtx)
+np.save('dist_coeff.npy', dist)
  
 print("Camera matrix : \n")
 print(mtx)
