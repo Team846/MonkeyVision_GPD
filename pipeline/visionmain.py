@@ -1,19 +1,20 @@
 from camera.camerareader import CameraReader
 import cv2
 import time
-import localization.vision22
+import localization.visiony
 import localization.partial_solution
 import pipeline.ntables
 from time import time_ns
 from typing import List
 import platform
 
+
 class VisionMain:
     def __init__(self, pipeline_number: int):
         self.pipeline_number = pipeline_number
 
         if platform.system() == "Windows" or platform.system() == "Darwin":
-            self.cam = CameraReader(0)
+            self.cam = CameraReader(pipeline_number)
         else:
             self.cam = CameraReader(f"GPDCam{pipeline_number}")
 
@@ -25,19 +26,23 @@ class VisionMain:
 
         self.frame: cv2.typing.MatLike = None
         self.detections: List[localization.partial_solution.Detection] = []
-        self.ntables : pipeline.ntables.NTables = pipeline.ntables.NTables(pipeline_number)
+        self.ntables: pipeline.ntables.NTables = pipeline.ntables.NTables(
+            pipeline_number
+        )
 
-        localization.partial_solution.SET_CAM(pipeline_number)
+        # localization.partial_solution.SET_CAM(pipeline_number)
 
     def execute(self):
         while True:
             frame, timestamp = self.cam.get_frame()
 
-            frame, rawDets = localization.vision22.runPipeline(frame)
+            frame, rawDets = localization.visiony.runPipeline(frame)
 
             self.frame = frame
 
-            self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(frame, rawDets)
+            self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(
+                frame, rawDets
+            )
 
             self.processing_latency = (time_ns() - timestamp) / 1e9
 
@@ -51,15 +56,15 @@ class VisionMain:
 
     def get_frame(self):
         return self.frame
-    
+
     def get_detections(self):
         return self.detections
-    
+
     def get_framerate(self):
         return self.framerate
-    
+
     def get_processing_latency(self):
         return self.processing_latency
-    
+
     def get_pipeline_number(self):
         return self.pipeline_number

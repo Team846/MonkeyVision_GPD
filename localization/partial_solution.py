@@ -3,28 +3,28 @@ from util.logger import Logger
 from cv2.typing import MatLike
 from typing import List, Tuple
 import math
-from localization.interpol import Interpol
+import json
 
 logger = Logger("PartialSolution")
 
-IS_TUNING_PURE = False
-IS_TUNING_ANGULAR = False
+pref_category = ConfigCategory(f"PartialSolution")
 
-CAM_FOV_X = 0
-CAM_FOV_Y = 0
-CAM_ANGLE_H = 0
-CAM_ANGLE_V = 0
-ONT_THRESH = 0
+WD = pref_category.getFloatConfig("WD", 15.5)
+ONT = pref_category.getFloatConfig("ONT", 10.0)
 
 
-def SET_CAM(pipeline: int):
-    pref_category = ConfigCategory(f"PartialSolution{pipeline}")
-    global CAM_FOV_X, CAM_ANGLE_H, CAM_FOV_Y, CAM_ANGLE_V, ONT_THRESH
-    CAM_FOV_X = pref_category.getFloatConfig("CAM_FOV_X_deg", 71.0)
-    CAM_FOV_Y = pref_category.getFloatConfig("CAM_FOV_Y_deg", 55.42)
-    CAM_ANGLE_H = pref_category.getFloatConfig("CAM_MOUNT_AH_deg", 0.0)
-    CAM_ANGLE_V = pref_category.getFloatConfig("CAM_MOUNT_AV_deg", 0.0)
-    ONT_THRESH = pref_category.getFloatConfig("ONT_THRESH", 14.0)
+def load_calibration(filename: str = "cal.json") -> dict:
+    try:
+        with open(filename, "r") as f:
+            data = json.load(f)
+        logger.Log(f"Loaded calibration from {filename}")
+        return data
+    except Exception as e:
+        logger.Error(f"Failed to load calibration file {filename}: {e}")
+        return {}
+
+
+cal = load_calibration()
 
 
 class Detection:
@@ -50,49 +50,62 @@ class Detection:
 
 
 def horizontal_angle(x_pos: float, frame: MatLike) -> float:
-    global CAM_FOV_X, CAM_ANGLE_H
+    global cal
 
-    x_diff = x_pos - frame.shape[1] / 2.0
+    q = cal.get("x", {"a": 0, "b": 0, "c": 0})
 
-    return (x_diff / frame.shape[1]) * CAM_FOV_X.valueFloat() + CAM_ANGLE_H.valueFloat()
+    meta = cal.get("meta", {})
+    w = meta["resolution"]["width"]
+
+    x_pos *= w / 256.0
+
+    return math.degrees(q["a"] * x_pos + q["b"] * x_pos**3 + q["c"] * x_pos**5)
 
 
 def vertical_angle(y_pos: float, frame: MatLike) -> float:
-    global CAM_FOV_Y, CAM_ANGLE_V
+    global cal
 
-    y_diff = y_pos - frame.shape[0] / 2.0
+    q = cal.get("y", {"a": 0, "b": 0, "c": 0})
 
-    return (y_diff / frame.shape[0]) * CAM_FOV_Y.valueFloat() + CAM_ANGLE_V.valueFloat()
+    meta = cal.get("meta", {})
+    h = meta["resolution"]["height"]
+
+    y_pos *= h / 256.0
+
+    return math.degrees(q["a"] * y_pos + q["b"] * y_pos**3 + q["c"] * y_pos**5)
 
 
 def CALCULATE_PARTIAL_SOLUTION(
     image: MatLike, objs: List[Tuple[float, float]]
 ) -> List[Detection]:
-    global ONT_THRESH
+    global WD, ONT
 
     result = []
 
     for obj in objs:
-        theta_h: float = horizontal_angle(obj[0], image)
-        theta_v: float = vertical_angle(obj[1], image)
+        objr = [0.0, 0.0, 0.0, 0.0]
+        objr[0] = -256 / 2 + obj[0]
+        objr[2] = -256 / 2 + obj[2]
+        objr[1] = 256 / 2 - obj[1]
+        objr[3] = 256 / 2 - obj[3]
 
-        l_h = math.radians(horizontal_angle(obj[0] - obj[2], image))
-        r_h = math.radians(horizontal_angle(obj[0] + obj[2], image))
+        l_h = math.radians(horizontal_angle(objr[0], image))
+        r_h = math.radians(horizontal_angle(objr[2], image))
 
-        r_ground: float = 1.0 / (math.tan(r_h) - math.tan(l_h))
-        if not IS_TUNING_PURE:
-            r_ground = Interpol.PureDistTable.interpolate(r_ground)
-            r_ground = r_ground / math.cos(math.radians(theta_h))
-        if not IS_TUNING_ANGULAR:
-            r_ground *= Interpol.AngularDistTable.interpolate(abs(theta_h))
+        d_v = math.radians(vertical_angle(objr[1], image))
+        u_v = math.radians(vertical_angle(objr[3], image))
 
-        height: float = r_ground * math.tan(math.radians(theta_v))
+        r_ground: float = WD.valueFloat() / (math.tan(r_h) - math.tan(l_h))
+        r_ground += WD.valueFloat() / (math.tan(d_v) - math.tan(u_v))
+        r_ground /= 2.0
+
+        height: float = r_ground * math.tan((d_v + u_v) / 2.0)
 
         is_on_top = False
 
-        if height < ONT_THRESH.valueFloat():
+        if height < ONT.valueFloat():
             is_on_top = True
 
-        result.append(Detection(r_ground, theta_h, is_on_top))
+        result.append(Detection(r_ground, math.degrees(l_h + r_h) / 2.0, is_on_top))
 
     return result

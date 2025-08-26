@@ -1,0 +1,18 @@
+description: Ultralytics YOLO11n model trained on data.yaml
+author: Ultralytics
+date: '2025-08-21T18:51:14.810702'
+version: 8.3.183
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 256
+- 256
+names:
+  0: algae
+args:
+  batch: 1
+  half: false
+channels: 3
