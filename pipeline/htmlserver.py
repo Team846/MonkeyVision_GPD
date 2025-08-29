@@ -349,7 +349,7 @@ class HTMLServer:
 
     def generate_frames(self):
         while True:
-            time.sleep(0.05)
+            time.sleep(0.08)
             frame = self.vision_main.get_frame()
             if frame is None:
                 continue

@@ -32,27 +32,26 @@ class VisionMain:
 
         # localization.partial_solution.SET_CAM(pipeline_number)
 
-    def execute(self):
-        while True:
-            frame, timestamp = self.cam.get_frame()
+    async def execute(self):
+        frame, timestamp = self.cam.get_frame()
 
-            frame, rawDets = localization.visiony.runPipeline(frame)
+        frame, rawDets = await localization.visiony.runPipeline(frame)
 
-            self.frame = frame
+        self.frame = frame
 
-            self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(
-                frame, rawDets
-            )
+        self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(
+            frame, rawDets
+        )
 
-            self.processing_latency = (time_ns() - timestamp) / 1e9
+        self.processing_latency = (time_ns() - timestamp) / 1e9
 
-            self.frame_count += 1
+        self.frame_count += 1
 
-            if self.frame_count % 20 == 0:
-                end_time = time.time()
-                self.framerate = 20 / (end_time - self.start_time)
-                self.start_time = end_time
-            self.ntables.execute(self.detections, self.processing_latency)
+        if self.frame_count % 20 == 0:
+            end_time = time.time()
+            self.framerate = 20 / (end_time - self.start_time)
+            self.start_time = end_time
+        self.ntables.execute(self.detections, self.processing_latency)
 
     def get_frame(self):
         return self.frame

@@ -83,29 +83,32 @@ def CALCULATE_PARTIAL_SOLUTION(
     result = []
 
     for obj in objs:
-        objr = [0.0, 0.0, 0.0, 0.0]
-        objr[0] = -256 / 2 + obj[0]
-        objr[2] = -256 / 2 + obj[2]
-        objr[1] = 256 / 2 - obj[1]
-        objr[3] = 256 / 2 - obj[3]
+        try:
+            objr = [0.0, 0.0, 0.0, 0.0]
+            objr[0] = -256 / 2 + obj[0]
+            objr[2] = -256 / 2 + obj[2]
+            objr[1] = 256 / 2 - obj[1]
+            objr[3] = 256 / 2 - obj[3]
 
-        l_h = math.radians(horizontal_angle(objr[0], image))
-        r_h = math.radians(horizontal_angle(objr[2], image))
+            l_h = math.radians(horizontal_angle(objr[0], image))
+            r_h = math.radians(horizontal_angle(objr[2], image))
 
-        d_v = math.radians(vertical_angle(objr[1], image))
-        u_v = math.radians(vertical_angle(objr[3], image))
+            d_v = math.radians(vertical_angle(objr[1], image))
+            u_v = math.radians(vertical_angle(objr[3], image))
 
-        r_ground: float = WD.valueFloat() / (math.tan(r_h) - math.tan(l_h))
-        r_ground += WD.valueFloat() / (math.tan(d_v) - math.tan(u_v))
-        r_ground /= 2.0
+            r_ground: float = WD.valueFloat() / (math.tan(r_h) - math.tan(l_h))
+            r_ground += WD.valueFloat() / (math.tan(d_v) - math.tan(u_v))
+            r_ground /= 2.0
 
-        height: float = r_ground * math.tan((d_v + u_v) / 2.0)
+            height: float = r_ground * math.tan((d_v + u_v) / 2.0)
 
-        is_on_top = False
+            is_on_top = False
 
-        if height < ONT.valueFloat():
-            is_on_top = True
+            if height > ONT.valueFloat():
+                is_on_top = True
 
-        result.append(Detection(r_ground, math.degrees(l_h + r_h) / 2.0, is_on_top))
+            result.append(Detection(r_ground, math.degrees(l_h + r_h) / 2.0, is_on_top))
+        except Exception as e:
+            logger.Error(f"Failed to process object {obj}: {e}")
 
     return result
