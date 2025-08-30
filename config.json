@@ -1,1 +1,1 @@
-{"visionY": {"CONFIDENCE": {"value": "0.4", "type": 2}, "ASPECT_THRESH": {"value": "2.0", "type": 2}}, "PartialSolution": {"WD": {"value": "16", "type": 2}, "ONT": {"value": "-3", "type": 2}}, "HTMLServer": {"framecomp_slider": {"value": "1", "type": 2}}}
+{"visionY": {"CONFIDENCE": {"value": "0.4", "type": 2}, "ASPECT_THRESH": {"value": "2.4", "type": 2}}, "PartialSolution": {"WD": {"value": "16", "type": 2}, "ONT": {"value": "-3", "type": 2}}, "HTMLServer": {"framecomp_slider": {"value": "1", "type": 2}}}

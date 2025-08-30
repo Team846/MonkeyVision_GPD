@@ -3,7 +3,7 @@ import pipeline.ntables
 from pipeline.visionmain import VisionMain
 import argparse
 from time import sleep
-import asyncio
+import threading
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -13,8 +13,15 @@ if __name__ == "__main__":
     vision_main = VisionMain(args.pipeline)
     server = pipeline.htmlserver.HTMLServer(vision_main)
 
-    async def main_loop():
+    def main_loop():
         while True:
-            await vision_main.execute()
+            vision_main.execute()
+            sleep(0.001)
 
-    asyncio.run(main_loop())
+    vision_thread = threading.Thread(target=main_loop, daemon=True)
+    vision_thread.start()
+    try:
+        while True:
+            sleep(1)
+    except KeyboardInterrupt:
+        exit(0)

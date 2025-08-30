@@ -7,6 +7,7 @@ import pipeline.ntables
 from time import time_ns
 from typing import List
 import platform
+import threading
 
 
 class VisionMain:
@@ -29,41 +30,50 @@ class VisionMain:
         self.ntables: pipeline.ntables.NTables = pipeline.ntables.NTables(
             pipeline_number
         )
+        self._lock = threading.Lock()
 
         # localization.partial_solution.SET_CAM(pipeline_number)
 
-    async def execute(self):
+    def execute(self):
         frame, timestamp = self.cam.get_frame()
 
-        frame, rawDets = await localization.visiony.runPipeline(frame)
+        frame, rawDets = localization.visiony.runPipeline(frame)
 
-        self.frame = frame
-
-        self.detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(
+        detections = localization.partial_solution.CALCULATE_PARTIAL_SOLUTION(
             frame, rawDets
         )
 
-        self.processing_latency = (time_ns() - timestamp) / 1e9
+        processing_latency = (time_ns() - timestamp) / 1e9
+
+        with self._lock:
+            self.frame = frame
+            self.detections = detections
+            self.processing_latency = processing_latency
 
         self.frame_count += 1
 
         if self.frame_count % 20 == 0:
             end_time = time.time()
-            self.framerate = 20 / (end_time - self.start_time)
+            with self._lock:
+                self.framerate = 20 / (end_time - self.start_time)
             self.start_time = end_time
-        self.ntables.execute(self.detections, self.processing_latency)
+        self.ntables.execute(detections, processing_latency)
 
     def get_frame(self):
-        return self.frame
+        with self._lock:
+            return self.frame.copy() if self.frame is not None else None
 
     def get_detections(self):
-        return self.detections
+        with self._lock:
+            return self.detections.copy()
 
     def get_framerate(self):
-        return self.framerate
+        with self._lock:
+            return self.framerate
 
     def get_processing_latency(self):
-        return self.processing_latency
+        with self._lock:
+            return self.processing_latency
 
     def get_pipeline_number(self):
         return self.pipeline_number
